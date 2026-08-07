@@ -314,8 +314,9 @@ $17,988</textarea>
     <button type="button" class="btn-search" onclick="calculateBestCombinations()">🔍 開始精算最接近組合 (TOP 5 排名)</button>
 
     <div id="recommendResultArea" style="display: none; margin-top: 20px;">
-      <div class="section-title" style="color: #096dd9;">
-        🏆 折後最接近 <span id="displayY">80,000</span> 元的 TOP 5 最佳組合
+      <div class="section-title" style="color: #096dd9; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px;">
+        <span>🏆 折後最接近 <span id="displayY">80,000</span> 元的 TOP 5 最佳組合</span>
+        <span id="displayDiscountRule" style="font-size: 13px; font-weight: normal; color: #555;"></span>
       </div>
       <div class="table-container">
         <table>
@@ -558,6 +559,17 @@ $17,988</textarea>
     const recommendResultArea = document.getElementById('recommendResultArea');
     const rankingTbody = document.getElementById('rankingTableBody');
     document.getElementById('displayY').textContent = targetY.toLocaleString();
+
+    const discountVal = parseFloat(discountInput.value) || 100;
+    const discountCap = parseFloat(discountCapInput.value) || 0;
+    const coinVal = parseFloat(coinInput.value) || 0;
+    const coinCap = parseFloat(coinCapInput.value) || 0;
+
+    const discountCapStr = discountCap > 0 ? `${discountCap.toLocaleString()}元` : '0元';
+    const coinCapStr = coinCap > 0 ? `${coinCap.toLocaleString()}元` : '0元';
+
+    document.getElementById('displayDiscountRule').textContent = 
+      `（折價券 ${discountVal} 折，上限 ${discountCapStr}；蝦皮回饋 ${coinVal}%，上限 ${coinCapStr}）`;
 
     rankingTbody.innerHTML = '';
 
