@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>蝦皮購物折扣回饋與組合推薦平台 - 蝦皮刷刷</title>
+  <style>
+    :root {
+      --primary-color: #ee4d2d;
+      --primary-hover: #d73211;
+      --bg-color: #f4f4f6;
+      --card-bg: #ffffff;
+      --text-color: #333333;
+      --border-color: #e0e0e0;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      color: var(--primary-color);
+      font-size: 22px;
+      margin-top: 0;
+      border-bottom: 3px solid var(--primary-color);
+      padding-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 8px;
+      color: #444;
+    }
+
+    .form-group { margin-bottom: 20px; }
+
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: monospace;
+      resize: vertical;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+    .btn-primary:hover { background-color: var(--primary-hover); }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover { background-color: #5a6268; }
+
+    .btn-search {
+      background-color: #2e7d32;
+      color: white;
+      width: 100%;
+      font-size: 16px;
+      padding: 12px;
+      margin-top: 15px;
+    }
+    .btn-search:hover { background-color: #1b5e20; }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .form-col {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 6px;
+      color: #333;
+      font-size: 14px;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    /* 表格樣式 */
+    .table-container {
+      overflow-x: auto;
+      margin-top: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 10px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: var(--primary-color);
+      color: white;
+      white-space: nowrap;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #777;
+      margin-top: 4px;
+    }
+
+    /* 回饋結果面板 */
+    .result-box {
+      background-color: #fff8f6;
+      border: 1px solid #ffccbe;
+      padding: 18px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+
+    .result-item {
+      font-size: 16px;
+      margin: 10px 0;
+      color: #444;
+    }
+
+    .highlight {
+      font-size: 20px;
+      color: #d0011b;
+      font-weight: bold;
+    }
+
+    .discount-summary {
+      font-size: 18px;
+      color: #2e7d32;
+      font-weight: bold;
+      background-color: #e8f5e9;
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 12px;
+      border: 1px solid #c8e6c9;
+    }
+
+    /* 推薦結果區塊 */
+    .recommend-section {
+      margin-top: 30px;
+      background-color: #f0f7ff;
+      border: 1px solid #bae0ff;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .rank-1 { background-color: #e6f7ff; font-weight: bold; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: white;
+      font-weight: bold;
+    }
+    .badge-less { background-color: #1976d2; }
+    .badge-more { background-color: #e53935; }
+    .badge-exact { background-color: #2e7d32; }
+
+    /* RWD */
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .container { padding: 15px; }
+      .form-row { flex-direction: column; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🛒 蝦皮購物折扣回饋與組合推薦平台</h2>
+
+  <div class="form-group">
+    <label for="priceInput">1. 商品原價 (每行代表一筆商品金額)：</label>
+    <textarea id="priceInput" rows="7" placeholder="例如：&#10;$71,548&#10;$94,488">$71,548
+$94,488
+$21,788
+$20,088
+$19,688
+$19,188
+$17,988</textarea>
+    <div class="hint">每行代表一筆商品金額，點擊匯入時會自動過濾 $ 與逗號，且數量預設為 0。</div>
+    <div class="btn-group">
+      <button type="button" class="btn-primary" onclick="importPrices()">📥 匯入商品價格至列表</button>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div class="section-title">2. 已匯入商品清單與試算</div>
+    <div class="table-container">
+      <table id="productTable">
+        <thead>
+          <tr>
+            <th style="width: 10%;">選取</th>
+            <th style="width: 40%;">商品價格</th>
+            <th style="width: 20%;">數量</th>
+            <th style="width: 30%;">小計</th>
+          </tr>
+        </thead>
+        <tbody id="productTableBody">
+          <tr><td colspan="4" style="color: #999;">請於上方點擊「匯入商品價格至列表」...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+  <div class="form-row">
+    <div class="form-col">
+      <label for="discountInput">折價券折數 (預設 94 代表 94折)：</label>
+      <input type="number" id="discountInput" value="94" min="0" max="100" step="0.1" oninput="calculateResults()">
+    </div>
+    <div class="form-col">
+      <label for="discountCapInput">折價券折扣上限 (0 代表無上限)：</label>
+      <input type="number" id="discountCapInput" value="0" min="0" placeholder="0 表示無上限" oninput="calculateResults()">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-col">
+      <label for="coinInput">蝦幣回饋 % 數 (預設 5 代表 5%)：</label>
+      <input type="number" id="coinInput" value="5" min="0" max="100" step="0.1" oninput="calculateResults()">
+    </div>
+    <div class="form-col">
+      <label for="coinCapInput">蝦幣回饋上限 (預設 4000，0 代表無上限)：</label>
+      <input type="number" id="coinCapInput" value="4000" min="0" placeholder="0 表示無上限" oninput="calculateResults()">
+    </div>
+  </div>
+
+  <div class="result-box">
+    <div class="result-item">勾選商品總原價：<span id="totalOriginalPrice">$0</span></div>
+    <div class="result-item">折後商品總價：<span id="totalDiscountedPrice">$0</span></div>
+    <div class="result-item">折價券省下金額：<span id="discountAmount">$0</span></div>
+    <div class="result-item">蝦幣回饋金額：<span id="coinAmount">$0</span></div>
+    <hr style="border: 0; border-top: 1px dashed #ffccbe; margin: 12px 0;">
+    <div class="result-item highlight">回饋總額 (折扣金額 + 蝦幣金額)：<span id="totalBenefit">$0</span></div>
+    
+    <div class="discount-summary" id="discountSummaryDisplay">
+      $0 回饋總金額 $0 約打 100 折
+    </div>
+  </div>
+
+  <div class="recommend-section">
+    <div class="section-title" style="color: #096dd9; font-size: 18px;">🎯 組合推薦計算設定</div>
+    <div class="form-row" style="margin-top: 10px;">
+      <div class="form-col">
+        <label for="targetY">🎯 目標折後金額 (Y 元)：</label>
+        <input type="number" id="targetY" value="80000" step="100">
+      </div>
+      <div class="form-col">
+        <label for="maxQtyPerItem">📦 單種商品數量上限：</label>
+        <input type="number" id="maxQtyPerItem" value="3" min="1" max="10">
+        <div class="hint">每種金額最多可選擇個數</div>
+      </div>
+    </div>
+
+    <button type="button" class="btn-search" onclick="calculateBestCombinations()">🔍 開始精算最接近組合 (TOP 5 排名)</button>
+
+    <div id="recommendResultArea" style="display: none; margin-top: 20px;">
+      <div class="section-title" style="color: #096dd9;">
+        🏆 折後最接近 <span id="displayY">80,000</span> 元的 TOP 5 最佳組合
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 8%;">排名</th>
+              <th style="width: 38%;">商品組合內容</th>
+              <th style="width: 18%;">總原價</th>
+              <th style="width: 18%;">折後實際金額</th>
+              <th style="width: 18%;">與目標差距</th>
+            </tr>
+          </thead>
+          <tbody id="rankingTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const priceInput = document.getElementById('priceInput');
+  const productTableBody = document.getElementById('productTableBody');
+  const discountInput = document.getElementById('discountInput');
+  const discountCapInput = document.getElementById('discountCapInput');
+  const coinInput = document.getElementById('coinInput');
+  const coinCapInput = document.getElementById('coinCapInput');
+
+  // 1. 匯入按鈕：自動清洗文字（移除 $ 與 ,）並預設數量為 0
+  function importPrices() {
+    const lines = priceInput.value.split('\n');
+    productTableBody.innerHTML = '';
+
+    let validPrices = 0;
+    lines.forEach((line) => {
+      const cleanLine = line.replace(/[\$,]/g, '').trim();
+      const price = parseFloat(cleanLine);
+
+      if (!isNaN(price) && price > 0) {
+        validPrices++;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="checkbox" class="prod-select" checked onchange="calculateResults()"></td>
+          <td><input type="number" value="${price}" class="prod-price" style="width:120px;" oninput="calculateResults()"></td>
+          <td><input type="number" value="0" min="0" class="prod-qty" style="width:70px;" oninput="calculateResults()"></td>
+          <td class="prod-subtotal">$0</td>
+        `;
+        productTableBody.appendChild(tr);
+      }
+    });
+
+    if (validPrices === 0) {
+      productTableBody.innerHTML = '<tr><td colspan="4" style="color: #999;">請於上方輸入有效商品價格後再點擊匯入...</td></tr>';
+    }
+
+    calculateResults();
+  }
+
+  // 2. 即時計算試算表結果
+  function calculateResults() {
+    const rows = productTableBody.querySelectorAll('tr');
+    let totalOriginalPrice = 0;
+
+    rows.forEach(row => {
+      const select = row.querySelector('.prod-select');
+      const priceInput = row.querySelector('.prod-price');
+      const qtyInput = row.querySelector('.prod-qty');
+      const subtotalTd = row.querySelector('.prod-subtotal');
+
+      if (select && priceInput && qtyInput) {
+        const price = parseFloat(priceInput.value) || 0;
+        const qty = parseInt(qtyInput.value) || 0;
+        const subtotal = price * qty;
+        
+        if (subtotalTd) subtotalTd.textContent = '$' + subtotal.toLocaleString();
+
+        if (select.checked) {
+          totalOriginalPrice += subtotal;
+        }
+      }
+    });
+
+    const discountRate = (parseFloat(discountInput.value) || 100) / 100;
+    const discountCap = parseFloat(discountCapInput.value) || 0;
+    const coinRate = (parseFloat(coinInput.value) || 0) / 100;
+    const coinCap = parseFloat(coinCapInput.value) || 0;
+
+    // 計算折價券金額
+    let rawDiscountAmount = totalOriginalPrice * (1 - discountRate);
+    let discountAmount = rawDiscountAmount;
+    if (discountCap > 0 && discountAmount > discountCap) {
+      discountAmount = discountCap;
+    }
+
+    // 計算折後商品總價
+    const totalDiscountedPrice = totalOriginalPrice - discountAmount;
+
+    // 計算蝦幣金額
+    let rawCoinAmount = totalDiscountedPrice * coinRate;
+    let coinAmount = rawCoinAmount;
+    if (coinCap > 0 && coinAmount > coinCap) {
+      coinAmount = coinCap;
+    }
+
+    // 回饋總額
+    const totalBenefit = discountAmount + coinAmount;
+
+    // 計算實際折數
+    let effectiveDiscountFold = 100;
+    if (totalOriginalPrice > 0) {
+      const netPaid = totalOriginalPrice - totalBenefit;
+      effectiveDiscountFold = (netPaid / totalOriginalPrice) * 100;
+      if (effectiveDiscountFold < 0) effectiveDiscountFold = 0;
+    }
+
+    const formattedFold = (effectiveDiscountFold % 1 === 0) 
+      ? effectiveDiscountFold.toFixed(0) 
+      : effectiveDiscountFold.toFixed(1);
+
+    const formattedOrigPrice = '$' + Math.round(totalOriginalPrice).toLocaleString();
+    const formattedBenefit = '$' + Math.round(totalBenefit).toLocaleString();
+
+    document.getElementById('totalOriginalPrice').textContent = formattedOrigPrice;
+    document.getElementById('totalDiscountedPrice').textContent = '$' + Math.round(totalDiscountedPrice).toLocaleString();
+    document.getElementById('discountAmount').textContent = '$' + Math.round(discountAmount).toLocaleString();
+    document.getElementById('coinAmount').textContent = '$' + Math.round(coinAmount).toLocaleString();
+    document.getElementById('totalBenefit').textContent = formattedBenefit;
+
+    document.getElementById('discountSummaryDisplay').textContent = 
+      `${formattedOrigPrice} 回饋總金額 ${formattedBenefit} 約打 ${formattedFold} 折`;
+  }
+
+  // 3. TOP 5 全組合精算演算法 (DFS)
+  function calculateBestCombinations() {
+    const rows = productTableBody.querySelectorAll('tr');
+    const items = [];
+
+    rows.forEach(row => {
+      const select = row.querySelector('.prod-select');
+      const priceInput = row.querySelector('.prod-price');
+      if (select && select.checked && priceInput) {
+        const val = parseFloat(priceInput.value);
+        if (!isNaN(val) && val > 0) items.push(val);
+      }
+    });
+
+    if (items.length === 0) {
+      alert('請先點擊匯入並勾選至少一項商品！');
+      return;
+    }
+
+    const targetY = parseFloat(document.getElementById('targetY').value) || 80000;
+    const discountN = (parseFloat(discountInput.value) || 94) / 100;
+    const maxLimit = parseInt(document.getElementById('maxQtyPerItem').value) || 3;
+
+    const allCombinations = [];
+
+    function search(index, currentCounts) {
+      if (index === items.length) {
+        const totalQty = currentCounts.reduce((a, b) => a + b, 0);
+        if (totalQty > 0) {
+          let totalOriginal = 0;
+          for (let i = 0; i < items.length; i++) {
+            totalOriginal += items[i] * currentCounts[i];
+          }
+          
+          const discountedPrice = totalOriginal * discountN;
+          const diff = discountedPrice - targetY;
+          const absDiff = Math.abs(diff);
+
+          allCombinations.push({
+            counts: [...currentCounts],
+            totalOriginal: totalOriginal,
+            discountedPrice: discountedPrice,
+            diff: diff,
+            absDiff: absDiff
+          });
+        }
+        return;
+      }
+
+      for (let q = 0; q <= maxLimit; q++) {
+        currentCounts.push(q);
+        search(index + 1, currentCounts);
+        currentCounts.pop();
+      }
+    }
+
+    search(0, []);
+
+    // 依據絕對差距小到大排序
+    allCombinations.sort((a, b) => a.absDiff - b.absDiff);
+
+    const top5 = allCombinations.slice(0, 5);
+
+    renderRankings(top5, items, targetY);
+  }
+
+  // 4. 渲染推薦排名結果
+  function renderRankings(topResults, items, targetY) {
+    const recommendResultArea = document.getElementById('recommendResultArea');
+    const rankingTbody = document.getElementById('rankingTableBody');
+    document.getElementById('displayY').textContent = targetY.toLocaleString();
+
+    rankingTbody.innerHTML = '';
+
+    topResults.forEach((res, idx) => {
+      const comboParts = [];
+      res.counts.forEach((qty, i) => {
+        if (qty > 0) {
+          comboParts.push(`$${items[i].toLocaleString()} × ${qty}`);
+        }
+      });
+      const comboString = comboParts.join(' + ');
+
+      let diffBadge = '';
+      const roundedDiff = Math.round(res.diff);
+      if (roundedDiff === 0) {
+        diffBadge = `<span class="badge badge-exact">完全命中</span>`;
+      } else if (roundedDiff < 0) {
+        diffBadge = `<span class="badge badge-less">少 $${Math.abs(roundedDiff).toLocaleString()} 元</span>`;
+      } else {
+        diffBadge = `<span class="badge badge-more">多 $${roundedDiff.toLocaleString()} 元</span>`;
+      }
+
+      const tr = document.createElement('tr');
+      if (idx === 0) tr.className = 'rank-1';
+
+      tr.innerHTML = `
+        <td><strong>#${idx + 1}</strong></td>
+        <td style="text-align: left; font-family: monospace;">${comboString}</td>
+        <td>$${Math.round(res.totalOriginal).toLocaleString()}</td>
+        <td style="color: #d0011b; font-weight: bold;">$${Math.round(res.discountedPrice).toLocaleString()}</td>
+        <td>${diffBadge}</td>
+      `;
+      rankingTbody.appendChild(tr);
+    });
+
+    recommendResultArea.style.display = 'block';
+    recommendResultArea.scrollIntoView({ behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
