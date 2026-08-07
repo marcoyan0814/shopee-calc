@@ -333,6 +333,18 @@ $17,988</textarea>
             <strong>精確折數：</strong><span id="qcFoldDisplay" style="color: #2e7d32; font-weight: bold; font-size: 15px;">100 折</span>
           </div>
         </div>
+
+        <!-- 雙重/多重折數連續換算 -->
+        <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e0;">
+          <div style="font-weight: bold; font-size: 13.5px; color: #2b6cb0; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+            🧮 雙重/多重折數連續換算 (如 94+93)
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="text" id="multiFoldInput" placeholder="例如: 94+93 或 95+95" style="flex: 1; font-size: 13.5px; padding: 7px 10px;" oninput="calculateMultiFold()">
+            <button type="button" class="btn-primary" style="background-color: #00838f; padding: 7px 12px; font-size: 13px; white-space: nowrap;" onclick="calculateMultiFold()">換算折數</button>
+          </div>
+          <div id="multiFoldResult" style="margin-top: 6px; font-size: 12.5px; color: #2e7d32; font-weight: bold; display: none;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -572,6 +584,51 @@ $17,988</textarea>
     document.getElementById('qcTotalDiscount').textContent = discountText;
     document.getElementById('qcFinalPrice').textContent = finalPriceText;
     document.getElementById('qcFoldDisplay').textContent = foldText;
+  }
+
+  // 0.7 雙重/多重折數連續換算功能 (如 94+93 代表94折再93折)
+  function calculateMultiFold() {
+    const rawVal = document.getElementById('multiFoldInput')?.value || '';
+    const resultEl = document.getElementById('multiFoldResult');
+    if (!resultEl) return;
+
+    if (!rawVal.trim()) {
+      resultEl.style.display = 'none';
+      resultEl.textContent = '';
+      return;
+    }
+
+    const parts = rawVal.split(/[\+\s,]+/).filter(p => p.trim() !== '');
+    
+    let combinedRatio = 1.0;
+    let validFolds = [];
+
+    for (let part of parts) {
+      const num = parseFloat(part);
+      if (!isNaN(num) && num > 0 && num <= 100) {
+        validFolds.push(num);
+        combinedRatio *= (num / 100);
+      }
+    }
+
+    if (validFolds.length === 0) {
+      resultEl.style.display = 'block';
+      resultEl.style.color = '#c62828';
+      resultEl.textContent = '⚠️ 請輸入有效的折數 (例如: 94+93)';
+      return;
+    }
+
+    const combinedFold = combinedRatio * 100;
+    const savePercent = 100 - combinedFold;
+
+    const formattedFold = (combinedFold % 1 === 0) ? combinedFold.toFixed(0) : combinedFold.toFixed(2);
+    const formattedSave = (savePercent % 1 === 0) ? savePercent.toFixed(0) : savePercent.toFixed(2);
+
+    const foldChainStr = validFolds.map(f => `${f}折`).join(' × ');
+
+    resultEl.style.display = 'block';
+    resultEl.style.color = '#2e7d32';
+    resultEl.textContent = `💡 換算結果：${foldChainStr} 相當於打了 ${formattedFold} 折（相當於省下約 ${formattedSave}%）`;
   }
 
   // 1.8 計算並顯示 3 個上限欄位對應的「封頂金額」
@@ -1143,6 +1200,7 @@ $17,988</textarea>
       priceInput: document.getElementById('priceInput').value,
       quickCalcAmountInput: document.getElementById('quickCalcAmountInput').value,
       quickCalcRewardInput: document.getElementById('quickCalcRewardInput').value,
+      multiFoldInput: document.getElementById('multiFoldInput')?.value || '',
       calcSourceMode: calcSourceMode,
       customTotalPriceInput: document.getElementById('customTotalPriceInput').value,
       discountInput: document.getElementById('discountInput').value,
@@ -1199,6 +1257,9 @@ $17,988</textarea>
         if (settings.priceInput !== undefined) document.getElementById('priceInput').value = settings.priceInput;
         if (settings.quickCalcAmountInput !== undefined) document.getElementById('quickCalcAmountInput').value = settings.quickCalcAmountInput;
         if (settings.quickCalcRewardInput !== undefined) document.getElementById('quickCalcRewardInput').value = settings.quickCalcRewardInput;
+        if (settings.multiFoldInput !== undefined && document.getElementById('multiFoldInput')) {
+          document.getElementById('multiFoldInput').value = settings.multiFoldInput;
+        }
         
         if (settings.calcSourceMode !== undefined) {
           const radio = document.querySelector(`input[name="calcSourceMode"][value="${settings.calcSourceMode}"]`);
@@ -1234,6 +1295,7 @@ $17,988</textarea>
     toggleCalcSourceMode();
     toggleBenefitMode();
     calculateQuickDiscount();
+    calculateMultiFold();
     return loadedProducts;
   }
 
