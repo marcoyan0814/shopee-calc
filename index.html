@@ -230,22 +230,56 @@
 <div class="container">
   <h2>🛒 蝦皮購物折扣回饋與組合推薦平台</h2>
 
-  <div class="form-group">
-    <label for="priceInput">1. 商品原價 (每行代表一筆商品金額)：</label>
-    <textarea id="priceInput" rows="7" placeholder="例如：&#10;$71,548&#10;$94,488">$71,548
+  <div class="form-group" style="background: #ffffff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+    <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+      <!-- 左欄：商品原價與匯入管理 -->
+      <div style="flex: 1.2; min-width: 320px;">
+        <label for="priceInput" style="font-weight: bold; font-size: 16px; color: #1a1a1a;">1. 商品原價 (每行代表一筆商品金額)：</label>
+        <textarea id="priceInput" rows="7" style="margin-top: 8px;" placeholder="例如：&#10;$71,548&#10;$94,488">$71,548
 $94,488
 $21,788
 $20,088
 $19,688
 $19,188
 $17,988</textarea>
-    <div class="hint">每行代表一筆商品金額，點擊匯入時會自動過濾 $ 與逗號，且數量預設為 0。</div>
-    <div class="btn-group">
-      <button type="button" class="btn-primary" onclick="importPrices()">📥 匯入商品價格至列表</button>
-      <button type="button" class="btn-secondary" style="background-color: #00838f;" onclick="saveSettings()">💾 儲存設定至 Cookie</button>
-      <button type="button" class="btn-secondary" style="background-color: #757575;" onclick="clearSettings()">🗑️ 清除已存設定</button>
+        <div class="hint">每行代表一筆商品金額，點擊匯入時會自動過濾 $ 與逗號，且數量預設為 0。</div>
+        <div class="btn-group" style="margin-top: 12px;">
+          <button type="button" class="btn-primary" onclick="importPrices()">📥 匯入商品價格至列表</button>
+          <button type="button" class="btn-secondary" style="background-color: #00838f;" onclick="saveSettings()">💾 儲存設定至 Cookie</button>
+          <button type="button" class="btn-secondary" style="background-color: #757575;" onclick="clearSettings()">🗑️ 清除已存設定</button>
+        </div>
+        <div id="saveHint" style="font-size: 13px; color: #2e7d32; font-weight: bold; margin-top: 8px; display: none;"></div>
+      </div>
+
+      <!-- 右欄：折扣快速計算功能 -->
+      <div style="flex: 1; min-width: 300px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column;">
+        <div style="font-weight: bold; font-size: 16px; color: #2b6cb0; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
+          ⚡ 折扣快速計算功能
+        </div>
+
+        <div class="form-row" style="margin-bottom: 10px;">
+          <div class="form-col">
+            <label for="quickCalcAmountInput" style="font-size: 13px; font-weight: bold;">金額 (可使用 +, * 算式)：</label>
+            <input type="text" id="quickCalcAmountInput" placeholder="如: 66093 或 400+100*2" style="font-size: 14px;">
+          </div>
+          <div class="form-col">
+            <label for="quickCalcRewardInput" style="font-size: 13px; font-weight: bold;">回饋 (可使用 +, * 算式)：</label>
+            <input type="text" id="quickCalcRewardInput" placeholder="如: 3238+2000" style="font-size: 14px;">
+          </div>
+        </div>
+
+        <button type="button" class="btn-primary" style="background-color: #2b6cb0; padding: 8px; margin-bottom: 12px; font-size: 14px;" onclick="calculateQuickDiscount()">⚡ 計算折扣與折數</button>
+
+        <div id="quickCalcResultBox" style="background: #ffffff; border: 1px solid #cbd5e0; border-radius: 6px; padding: 12px; font-size: 13.5px; line-height: 1.8; flex: 1;">
+          <div><strong>總原價：</strong><span id="qcTotalOriginal" style="color: #2d3748; font-weight: bold;">$0</span></div>
+          <div><strong>總折扣金額：</strong><span id="qcTotalDiscount" style="color: #d0011b; font-weight: bold;">$0</span></div>
+          <div><strong>折後金額：</strong><span id="qcFinalPrice" style="color: #2b6cb0; font-weight: bold;">$0</span></div>
+          <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e0;">
+            <strong>精確折數：</strong><span id="qcFoldDisplay" style="color: #2e7d32; font-weight: bold; font-size: 15px;">100 折</span>
+          </div>
+        </div>
+      </div>
     </div>
-    <div id="saveHint" style="font-size: 13px; color: #2e7d32; font-weight: bold; margin-top: 8px; display: none;"></div>
   </div>
 
   <div class="main-layout" style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 20px;">
@@ -425,6 +459,62 @@ $17,988</textarea>
   const discountCapInput = document.getElementById('discountCapInput');
   const coinInput = document.getElementById('coinInput');
   const coinCapInput = document.getElementById('coinCapInput');
+
+  // 0.5 算術運算符安全解析器 (+, -, *, /, (), 先乘除後加減)
+  function safeEvalMath(expr) {
+    if (!expr || typeof expr !== 'string') return 0;
+    const cleanExpr = expr.replace(/[^0-9\.\+\-\*\/\(\)\s]/g, '');
+    if (!cleanExpr.trim()) return 0;
+    try {
+      const func = new Function(`"use strict"; return (${cleanExpr});`);
+      const val = func();
+      return isNaN(val) || !isFinite(val) ? 0 : val;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // 0.6 折扣快速計算功能
+  function calculateQuickDiscount() {
+    const rawAmountStr = document.getElementById('quickCalcAmountInput')?.value || '';
+    const rawRewardStr = document.getElementById('quickCalcRewardInput')?.value || '';
+
+    const origVal = safeEvalMath(rawAmountStr);
+    const rewardVal = safeEvalMath(rawRewardStr);
+
+    const finalPrice = Math.max(0, origVal - rewardVal);
+
+    // 總原價文字
+    const origText = '$' + Math.round(origVal).toLocaleString();
+
+    // 總折扣金額顯示 (若包含 +, *, -, / 運算符則顯示算式分解)
+    let discountText = '$' + Math.round(rewardVal).toLocaleString();
+    if (rawRewardStr.includes('+') || rawRewardStr.includes('*') || rawRewardStr.includes('-') || rawRewardStr.includes('/')) {
+      const formattedExpr = rawRewardStr.replace(/([0-9]+)/g, (match) => parseInt(match, 10).toLocaleString());
+      discountText = `${formattedExpr} = $${Math.round(rewardVal).toLocaleString()}`;
+    }
+
+    // 折後金額顯示
+    let finalPriceText = `$${Math.round(origVal).toLocaleString()} - $${Math.round(rewardVal).toLocaleString()} = $${Math.round(finalPrice).toLocaleString()}`;
+    if (origVal === 0) {
+      finalPriceText = '$0';
+    }
+
+    // 計算精確折數與省下 %
+    let foldText = '100 折';
+    if (origVal > 0) {
+      const fold = (finalPrice / origVal) * 100;
+      const savePercent = 100 - fold;
+      const formattedFold = (fold % 1 === 0) ? fold.toFixed(0) : fold.toFixed(2);
+      const formattedSave = (savePercent % 1 === 0) ? savePercent.toFixed(0) : savePercent.toFixed(2);
+      foldText = `${formattedFold} 折（相當於省下約 ${formattedSave}%）`;
+    }
+
+    document.getElementById('qcTotalOriginal').textContent = origText;
+    document.getElementById('qcTotalDiscount').textContent = discountText;
+    document.getElementById('qcFinalPrice').textContent = finalPriceText;
+    document.getElementById('qcFoldDisplay').textContent = foldText;
+  }
 
   // 1. 匯入按鈕：自動清洗文字（移除 $ 與 ,）並預設數量為 0
   function importPrices() {
@@ -935,6 +1025,8 @@ $17,988</textarea>
 
     const settings = {
       priceInput: document.getElementById('priceInput').value,
+      quickCalcAmountInput: document.getElementById('quickCalcAmountInput').value,
+      quickCalcRewardInput: document.getElementById('quickCalcRewardInput').value,
       calcSourceMode: calcSourceMode,
       customTotalPriceInput: document.getElementById('customTotalPriceInput').value,
       discountInput: document.getElementById('discountInput').value,
@@ -989,6 +1081,8 @@ $17,988</textarea>
       try {
         const settings = JSON.parse(saved);
         if (settings.priceInput !== undefined) document.getElementById('priceInput').value = settings.priceInput;
+        if (settings.quickCalcAmountInput !== undefined) document.getElementById('quickCalcAmountInput').value = settings.quickCalcAmountInput;
+        if (settings.quickCalcRewardInput !== undefined) document.getElementById('quickCalcRewardInput').value = settings.quickCalcRewardInput;
         
         if (settings.calcSourceMode !== undefined) {
           const radio = document.querySelector(`input[name="calcSourceMode"][value="${settings.calcSourceMode}"]`);
@@ -1023,6 +1117,7 @@ $17,988</textarea>
     }
     toggleCalcSourceMode();
     toggleBenefitMode();
+    calculateQuickDiscount();
     return loadedProducts;
   }
 
