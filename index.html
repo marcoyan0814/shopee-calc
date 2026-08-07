@@ -321,11 +321,13 @@ $17,988</textarea>
         <table>
           <thead>
             <tr>
-              <th style="width: 8%;">排名</th>
-              <th style="width: 38%;">商品組合內容</th>
-              <th style="width: 18%;">總原價</th>
-              <th style="width: 18%;">折後實際金額</th>
-              <th style="width: 18%;">與目標差距</th>
+              <th style="width: 6%;">排名</th>
+              <th style="width: 28%;">商品組合內容</th>
+              <th style="width: 13%;">總原價</th>
+              <th style="width: 13%;">折後實際金額</th>
+              <th style="width: 13%;">與目標差距</th>
+              <th style="width: 17%;">回饋明細與總額</th>
+              <th style="width: 10%;">實質折數</th>
             </tr>
           </thead>
           <tbody id="rankingTableBody">
@@ -437,7 +439,7 @@ $17,988</textarea>
 
     const formattedFold = (effectiveDiscountFold % 1 === 0) 
       ? effectiveDiscountFold.toFixed(0) 
-      : effectiveDiscountFold.toFixed(1);
+      : effectiveDiscountFold.toFixed(2);
 
     const formattedOrigPrice = '$' + Math.round(totalOriginalPrice).toLocaleString();
     const formattedBenefit = '$' + Math.round(totalBenefit).toLocaleString();
@@ -471,7 +473,10 @@ $17,988</textarea>
     }
 
     const targetY = parseFloat(document.getElementById('targetY').value) || 80000;
-    const discountN = (parseFloat(discountInput.value) || 94) / 100;
+    const discountRate = (parseFloat(discountInput.value) || 100) / 100;
+    const discountCap = parseFloat(discountCapInput.value) || 0;
+    const coinRate = (parseFloat(coinInput.value) || 0) / 100;
+    const coinCap = parseFloat(coinCapInput.value) || 0;
     const maxLimit = parseInt(document.getElementById('maxQtyPerItem').value) || 3;
 
     const allCombinations = [];
@@ -484,8 +489,35 @@ $17,988</textarea>
           for (let i = 0; i < items.length; i++) {
             totalOriginal += items[i] * currentCounts[i];
           }
+
+          // 計算折價券金額
+          let rawDiscountAmount = totalOriginal * (1 - discountRate);
+          let discountAmount = rawDiscountAmount;
+          if (discountCap > 0 && discountAmount > discountCap) {
+            discountAmount = discountCap;
+          }
+
+          // 折後實際金額
+          const discountedPrice = totalOriginal - discountAmount;
+
+          // 計算蝦幣金額
+          let rawCoinAmount = discountedPrice * coinRate;
+          let coinAmount = rawCoinAmount;
+          if (coinCap > 0 && coinAmount > coinCap) {
+            coinAmount = coinCap;
+          }
+
+          // 回饋總額 (折扣金額 + 蝦幣金額)
+          const totalBenefit = discountAmount + coinAmount;
+
+          // 實質折數 (以回饋總額計算)
+          let effectiveFold = 100;
+          if (totalOriginal > 0) {
+            const netPaid = totalOriginal - totalBenefit;
+            effectiveFold = (netPaid / totalOriginal) * 100;
+            if (effectiveFold < 0) effectiveFold = 0;
+          }
           
-          const discountedPrice = totalOriginal * discountN;
           const diff = discountedPrice - targetY;
           const absDiff = Math.abs(diff);
 
@@ -493,6 +525,10 @@ $17,988</textarea>
             counts: [...currentCounts],
             totalOriginal: totalOriginal,
             discountedPrice: discountedPrice,
+            discountAmount: discountAmount,
+            coinAmount: coinAmount,
+            totalBenefit: totalBenefit,
+            effectiveFold: effectiveFold,
             diff: diff,
             absDiff: absDiff
           });
@@ -544,6 +580,10 @@ $17,988</textarea>
         diffBadge = `<span class="badge badge-more">多 $${roundedDiff.toLocaleString()} 元</span>`;
       }
 
+      const formattedFold = (res.effectiveFold % 1 === 0) 
+        ? res.effectiveFold.toFixed(0) 
+        : res.effectiveFold.toFixed(2);
+
       const tr = document.createElement('tr');
       if (idx === 0) tr.className = 'rank-1';
 
@@ -553,6 +593,12 @@ $17,988</textarea>
         <td>$${Math.round(res.totalOriginal).toLocaleString()}</td>
         <td style="color: #d0011b; font-weight: bold;">$${Math.round(res.discountedPrice).toLocaleString()}</td>
         <td>${diffBadge}</td>
+        <td style="font-size: 12px; text-align: left; line-height: 1.4;">
+          <div>折扣：$${Math.round(res.discountAmount).toLocaleString()}</div>
+          <div>蝦幣：$${Math.round(res.coinAmount).toLocaleString()}</div>
+          <div style="color: #2e7d32; font-weight: bold;">總額：$${Math.round(res.totalBenefit).toLocaleString()}</div>
+        </td>
+        <td>${formattedFold} 折</td>
       `;
       rankingTbody.appendChild(tr);
     });
