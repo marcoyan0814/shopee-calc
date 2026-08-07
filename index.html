@@ -474,10 +474,10 @@ $17,988</textarea>
 
     updateDiscountRuleText();
 
-    // 若精算結果區塊已開啟，隨切換自動重算 TOP 5
+    // 關閉最接近組合結果區塊，避免舊資料誤導
     const recommendResultArea = document.getElementById('recommendResultArea');
-    if (recommendResultArea && recommendResultArea.style.display !== 'none') {
-      calculateBestCombinations();
+    if (recommendResultArea) {
+      recommendResultArea.style.display = 'none';
     }
   }
 
