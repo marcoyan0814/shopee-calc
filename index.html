@@ -390,6 +390,7 @@ $17,988</textarea>
         <div class="form-col">
           <label for="discountCapInput">折價券折扣上限 (0 代表無上限)：</label>
           <input type="number" id="discountCapInput" value="0" min="0" placeholder="0 表示無上限" oninput="calculateResults()">
+          <div id="discountCapHint" style="font-size: 12px; color: #d0011b; font-weight: bold; margin-top: 4px; display: none;"></div>
         </div>
       </div>
 
@@ -421,6 +422,7 @@ $17,988</textarea>
         <div class="form-col">
           <label for="extraDiscountCapInput">額外折價券折扣上限 (0 代表無上限)：</label>
           <input type="number" id="extraDiscountCapInput" value="0" min="0" placeholder="0 表示無上限" oninput="calculateResults()">
+          <div id="extraCapHint" style="font-size: 12px; color: #d0011b; font-weight: bold; margin-top: 4px; display: none;"></div>
         </div>
       </div>
 
@@ -433,6 +435,7 @@ $17,988</textarea>
         <div class="form-col">
           <label for="coinCapInput">蝦幣回饋上限 (預設 4000，0 代表無上限)：</label>
           <input type="number" id="coinCapInput" value="4000" min="0" placeholder="0 表示無上限" oninput="calculateResults()">
+          <div id="coinCapHint" style="font-size: 12px; color: #d0011b; font-weight: bold; margin-top: 4px; display: none;"></div>
         </div>
       </div>
 
@@ -569,6 +572,62 @@ $17,988</textarea>
     document.getElementById('qcTotalDiscount').textContent = discountText;
     document.getElementById('qcFinalPrice').textContent = finalPriceText;
     document.getElementById('qcFoldDisplay').textContent = foldText;
+  }
+
+  // 1.8 計算並顯示 3 個上限欄位對應的「封頂金額」
+  function updateCapHints() {
+    // 1. 主折價券折扣上限封頂
+    const discountVal = parseFloat(discountInput.value) || 100;
+    const discountCap = parseFloat(discountCapInput.value) || 0;
+    const discountRate = discountVal / 100;
+    const discountCapHintEl = document.getElementById('discountCapHint');
+
+    if (discountCapHintEl) {
+      if (discountCap > 0 && discountRate < 1) {
+        const capPrice = discountCap / (1 - discountRate);
+        discountCapHintEl.textContent = `💡 封頂金額 $${Math.ceil(capPrice).toLocaleString()}`;
+        discountCapHintEl.style.display = 'block';
+      } else {
+        discountCapHintEl.textContent = '';
+        discountCapHintEl.style.display = 'none';
+      }
+    }
+
+    // 2. 額外折價券折扣上限封頂
+    const extraDiscountVal = parseFloat(document.getElementById('extraDiscountInput')?.value) || 100;
+    const extraDiscountCap = parseFloat(document.getElementById('extraDiscountCapInput')?.value) || 0;
+    const extraRate = extraDiscountVal / 100;
+    const extraCapHintEl = document.getElementById('extraCapHint');
+
+    if (extraCapHintEl) {
+      if (extraDiscountCap > 0 && extraRate < 1) {
+        const capBasePrice = extraDiscountCap / (1 - extraRate);
+        const capTotalPrice = discountRate > 0 ? (capBasePrice / discountRate) : capBasePrice;
+        extraCapHintEl.textContent = `💡 封頂金額 $${Math.ceil(capTotalPrice).toLocaleString()} (折後 $${Math.ceil(capBasePrice).toLocaleString()})`;
+        extraCapHintEl.style.display = 'block';
+      } else {
+        extraCapHintEl.textContent = '';
+        extraCapHintEl.style.display = 'none';
+      }
+    }
+
+    // 3. 蝦幣回饋上限封頂
+    const coinVal = parseFloat(coinInput.value) || 0;
+    const coinCap = parseFloat(coinCapInput.value) || 0;
+    const coinRate = coinVal / 100;
+    const coinCapHintEl = document.getElementById('coinCapHint');
+
+    if (coinCapHintEl) {
+      if (coinCap > 0 && coinRate > 0) {
+        const capBasePrice = coinCap / coinRate;
+        const capTotalPrice = discountRate > 0 ? (capBasePrice / discountRate) : capBasePrice;
+        coinCapHintEl.textContent = `💡 封頂金額 $${Math.ceil(capTotalPrice).toLocaleString()} (折後 $${Math.ceil(capBasePrice).toLocaleString()})`;
+        coinCapHintEl.style.display = 'block';
+      } else {
+        coinCapHintEl.textContent = '';
+        coinCapHintEl.style.display = 'none';
+      }
+    }
   }
 
   // 1. 匯入按鈕：自動清洗文字（移除 $ 與 ,）並預設數量為 0
@@ -837,6 +896,8 @@ $17,988</textarea>
 
     document.getElementById('discountSummaryDisplay').textContent = 
       `${formattedOrigPrice} 回饋總金額 ${formattedBenefit} 約打 ${formattedFold} 折`;
+
+    updateCapHints();
   }
 
   // 3. TOP 5 全組合精算演算法 (DFS)
