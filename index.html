@@ -971,12 +971,15 @@ $17,988</textarea>
       const priceInput = row.querySelector('.prod-price');
       if (priceInput) {
         const val = parseFloat(priceInput.value);
-        if (!isNaN(val) && val > 0) items.push(val);
+        if (!isNaN(val) && val > 0) {
+          const lastTwo = Math.abs(Math.round(val)) % 100;
+          if (lastTwo === 48 || lastTwo === 88) items.push(val);
+        }
       }
     });
 
     if (items.length === 0) {
-      alert('請先點擊匯入至少一項有效商品價格！');
+      alert('沒有可列入組合精算的商品，商品金額尾數必須為 48 或 88！');
       return;
     }
 
