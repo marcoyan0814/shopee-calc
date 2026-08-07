@@ -27,7 +27,7 @@
     }
 
     .container {
-      max-width: 900px;
+      max-width: 1280px;
       margin: 0 auto;
       background: var(--card-bg);
       padding: 25px;
@@ -242,7 +242,10 @@ $17,988</textarea>
     <div class="hint">每行代表一筆商品金額，點擊匯入時會自動過濾 $ 與逗號，且數量預設為 0。</div>
     <div class="btn-group">
       <button type="button" class="btn-primary" onclick="importPrices()">📥 匯入商品價格至列表</button>
+      <button type="button" class="btn-secondary" style="background-color: #00838f;" onclick="saveSettings()">💾 儲存設定至 Cookie</button>
+      <button type="button" class="btn-secondary" style="background-color: #757575;" onclick="clearSettings()">🗑️ 清除已存設定</button>
     </div>
+    <div id="saveHint" style="font-size: 13px; color: #2e7d32; font-weight: bold; margin-top: 8px; display: none;"></div>
   </div>
 
   <div class="form-group">
@@ -622,9 +625,128 @@ $17,988</textarea>
     recommendResultArea.scrollIntoView({ behavior: 'smooth' });
   }
 
-  // 5. 頁面載入完成時自動匯入商品價格
+  // 5. Cookie 讀寫與設定管理
+  function setCookie(name, value, days) {
+    let expires = "";
+    if (days) {
+      const date = new Date();
+      date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+      expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/; SameSite=Lax";
+  }
+
+  function getCookie(name) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+      let c = ca[i];
+      while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+      if (c.indexOf(nameEQ) === 0) {
+        return decodeURIComponent(c.substring(nameEQ.length, c.length));
+      }
+    }
+    return null;
+  }
+
+  function saveSettings() {
+    const products = [];
+    const rows = productTableBody.querySelectorAll('tr');
+    rows.forEach(row => {
+      const priceEl = row.querySelector('.prod-price');
+      const qtyEl = row.querySelector('.prod-qty');
+      if (priceEl && qtyEl) {
+        products.push({
+          price: parseFloat(priceEl.value) || 0,
+          qty: parseInt(qtyEl.value) || 0
+        });
+      }
+    });
+
+    const settings = {
+      priceInput: document.getElementById('priceInput').value,
+      discountInput: document.getElementById('discountInput').value,
+      discountCapInput: document.getElementById('discountCapInput').value,
+      coinInput: document.getElementById('coinInput').value,
+      coinCapInput: document.getElementById('coinCapInput').value,
+      targetY: document.getElementById('targetY').value,
+      maxQtyPerItem: document.getElementById('maxQtyPerItem').value,
+      products: products
+    };
+    setCookie('shopee_calc_settings', JSON.stringify(settings), 365);
+
+    const saveHint = document.getElementById('saveHint');
+    if (saveHint) {
+      saveHint.textContent = '✅ 已成功將設定與商品試算資料儲存至 Cookie，下次開啟頁面將自動套用！';
+      saveHint.style.color = '#2e7d32';
+      saveHint.style.display = 'block';
+      setTimeout(() => { saveHint.style.display = 'none'; }, 3000);
+    }
+  }
+
+  function renderProductsFromData(products) {
+    productTableBody.innerHTML = '';
+    products.forEach((p) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="number" value="${p.price}" class="prod-price" style="width:120px;" oninput="calculateResults()"></td>
+        <td>
+          <select class="prod-qty" style="width:70px; padding:6px; border-radius:4px; border:1px solid var(--border-color);" onchange="calculateResults()">
+            <option value="0" ${p.qty === 0 ? 'selected' : ''}>0</option>
+            <option value="1" ${p.qty === 1 ? 'selected' : ''}>1</option>
+            <option value="2" ${p.qty === 2 ? 'selected' : ''}>2</option>
+            <option value="3" ${p.qty === 3 ? 'selected' : ''}>3</option>
+          </select>
+        </td>
+        <td class="prod-subtotal">$0</td>
+      `;
+      productTableBody.appendChild(tr);
+    });
+    calculateResults();
+  }
+
+  function loadSettings() {
+    const saved = getCookie('shopee_calc_settings');
+    let loadedProducts = false;
+    if (saved) {
+      try {
+        const settings = JSON.parse(saved);
+        if (settings.priceInput !== undefined) document.getElementById('priceInput').value = settings.priceInput;
+        if (settings.discountInput !== undefined) document.getElementById('discountInput').value = settings.discountInput;
+        if (settings.discountCapInput !== undefined) document.getElementById('discountCapInput').value = settings.discountCapInput;
+        if (settings.coinInput !== undefined) document.getElementById('coinInput').value = settings.coinInput;
+        if (settings.coinCapInput !== undefined) document.getElementById('coinCapInput').value = settings.coinCapInput;
+        if (settings.targetY !== undefined) document.getElementById('targetY').value = settings.targetY;
+        if (settings.maxQtyPerItem !== undefined) document.getElementById('maxQtyPerItem').value = settings.maxQtyPerItem;
+        
+        if (Array.isArray(settings.products) && settings.products.length > 0) {
+          renderProductsFromData(settings.products);
+          loadedProducts = true;
+        }
+      } catch (e) {
+        console.error('讀取 Cookie 設定失敗', e);
+      }
+    }
+    return loadedProducts;
+  }
+
+  function clearSettings() {
+    setCookie('shopee_calc_settings', '', -1);
+    const saveHint = document.getElementById('saveHint');
+    if (saveHint) {
+      saveHint.textContent = '🗑️ 已成功清除 Cookie 設定！';
+      saveHint.style.color = '#c62828';
+      saveHint.style.display = 'block';
+      setTimeout(() => { saveHint.style.display = 'none'; }, 3000);
+    }
+  }
+
+  // 6. 頁面載入完成時先載入 Cookie 設定，若無歷史商品資料則自動解析匯入
   window.addEventListener('DOMContentLoaded', () => {
-    importPrices();
+    const loadedProducts = loadSettings();
+    if (!loadedProducts) {
+      importPrices();
+    }
   });
 </script>
 
