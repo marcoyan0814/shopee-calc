@@ -248,14 +248,13 @@ $17,988</textarea>
       <table id="productTable">
         <thead>
           <tr>
-            <th style="width: 10%;">選取</th>
-            <th style="width: 40%;">商品價格</th>
-            <th style="width: 20%;">數量</th>
+            <th style="width: 45%;">商品價格</th>
+            <th style="width: 25%;">數量</th>
             <th style="width: 30%;">小計</th>
           </tr>
         </thead>
         <tbody id="productTableBody">
-          <tr><td colspan="4" style="color: #999;">請於上方點擊「匯入商品價格至列表」...</td></tr>
+          <tr><td colspan="3" style="color: #999;">請於上方點擊「匯入商品價格至列表」...</td></tr>
         </tbody>
       </table>
     </div>
@@ -286,7 +285,7 @@ $17,988</textarea>
   </div>
 
   <div class="result-box">
-    <div class="result-item">勾選商品總原價：<span id="totalOriginalPrice">$0</span></div>
+    <div class="result-item">商品總原價：<span id="totalOriginalPrice">$0</span></div>
     <div class="result-item">折後商品總價：<span id="totalDiscountedPrice">$0</span></div>
     <div class="result-item">折價券省下金額：<span id="discountAmount">$0</span></div>
     <div class="result-item">蝦幣回饋金額：<span id="coinAmount">$0</span></div>
@@ -360,9 +359,15 @@ $17,988</textarea>
         validPrices++;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><input type="checkbox" class="prod-select" checked onchange="calculateResults()"></td>
           <td><input type="number" value="${price}" class="prod-price" style="width:120px;" oninput="calculateResults()"></td>
-          <td><input type="number" value="0" min="0" class="prod-qty" style="width:70px;" oninput="calculateResults()"></td>
+          <td>
+            <select class="prod-qty" style="width:70px; padding:6px; border-radius:4px; border:1px solid var(--border-color);" onchange="calculateResults()">
+              <option value="0" selected>0</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </td>
           <td class="prod-subtotal">$0</td>
         `;
         productTableBody.appendChild(tr);
@@ -370,7 +375,7 @@ $17,988</textarea>
     });
 
     if (validPrices === 0) {
-      productTableBody.innerHTML = '<tr><td colspan="4" style="color: #999;">請於上方輸入有效商品價格後再點擊匯入...</td></tr>';
+      productTableBody.innerHTML = '<tr><td colspan="3" style="color: #999;">請於上方輸入有效商品價格後再點擊匯入...</td></tr>';
     }
 
     calculateResults();
@@ -382,21 +387,18 @@ $17,988</textarea>
     let totalOriginalPrice = 0;
 
     rows.forEach(row => {
-      const select = row.querySelector('.prod-select');
       const priceInput = row.querySelector('.prod-price');
       const qtyInput = row.querySelector('.prod-qty');
       const subtotalTd = row.querySelector('.prod-subtotal');
 
-      if (select && priceInput && qtyInput) {
+      if (priceInput && qtyInput) {
         const price = parseFloat(priceInput.value) || 0;
         const qty = parseInt(qtyInput.value) || 0;
         const subtotal = price * qty;
         
         if (subtotalTd) subtotalTd.textContent = '$' + subtotal.toLocaleString();
 
-        if (select.checked) {
-          totalOriginalPrice += subtotal;
-        }
+        totalOriginalPrice += subtotal;
       }
     });
 
@@ -456,16 +458,15 @@ $17,988</textarea>
     const items = [];
 
     rows.forEach(row => {
-      const select = row.querySelector('.prod-select');
       const priceInput = row.querySelector('.prod-price');
-      if (select && select.checked && priceInput) {
+      if (priceInput) {
         const val = parseFloat(priceInput.value);
         if (!isNaN(val) && val > 0) items.push(val);
       }
     });
 
     if (items.length === 0) {
-      alert('請先點擊匯入並勾選至少一項商品！');
+      alert('請先點擊匯入至少一項有效商品價格！');
       return;
     }
 
@@ -559,6 +560,11 @@ $17,988</textarea>
     recommendResultArea.style.display = 'block';
     recommendResultArea.scrollIntoView({ behavior: 'smooth' });
   }
+
+  // 5. 頁面載入完成時自動匯入商品價格
+  window.addEventListener('DOMContentLoaded', () => {
+    importPrices();
+  });
 </script>
 
 </body>
