@@ -217,11 +217,66 @@
     .badge-more { background-color: #e53935; }
     .badge-exact { background-color: #2e7d32; }
 
-    /* RWD */
-    @media (max-width: 600px) {
-      body { padding: 10px; }
-      .container { padding: 15px; }
-      .form-row { flex-direction: column; gap: 10px; }
+    /* RWD 手機與平板響應式優化 */
+    @media (max-width: 768px) {
+      body {
+        padding: 8px;
+      }
+      .container {
+        padding: 14px;
+        border-radius: 8px;
+      }
+      h2 {
+        font-size: 18px;
+        padding-bottom: 8px;
+      }
+      .form-row {
+        flex-direction: column;
+        gap: 12px;
+      }
+      .form-col {
+        min-width: 100%;
+      }
+      .btn-group {
+        flex-direction: column;
+      }
+      .btn-group button {
+        width: 100%;
+        padding: 12px;
+      }
+      .highlight {
+        font-size: 17px;
+      }
+      .discount-summary {
+        font-size: 15px;
+        padding: 10px;
+      }
+      .recommend-section {
+        padding: 12px;
+      }
+      /* 表格在手機版平滑橫向滾動 */
+      .table-container {
+        -webkit-overflow-scrolling: touch;
+      }
+      .table-container table {
+        min-width: 580px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 4px;
+      }
+      .container {
+        padding: 10px;
+      }
+      th, td {
+        padding: 8px 6px;
+        font-size: 13px;
+      }
+      .result-item {
+        font-size: 14px;
+      }
     }
   </style>
 </head>
