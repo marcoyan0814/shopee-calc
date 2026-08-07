@@ -365,8 +365,8 @@ $17,988</textarea>
 
       <!-- 自訂商品總原價輸入區 (選擇「使用商品總原價」時顯示) -->
       <div id="customTotalArea" style="display: none; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; border-radius: 8px; margin-bottom: 15px;">
-        <label for="customTotalPriceInput" style="font-weight: bold; color: #d48806;">💰 自訂商品總原價 (元)：</label>
-        <input type="number" id="customTotalPriceInput" value="0" min="0" step="100" style="width: 100%; padding: 8px; font-size: 16px; border: 1px solid #ffd591; border-radius: 4px; margin-top: 6px; box-sizing: border-box;" oninput="calculateResults()">
+        <label for="customTotalPriceInput" style="font-weight: bold; color: #d48806;">💰 自訂商品總原價 (元，可使用 +, * 算式)：</label>
+        <input type="text" id="customTotalPriceInput" value="0" placeholder="例如: 80000 或 71548+20088*2" style="width: 100%; padding: 8px; font-size: 16px; border: 1px solid #ffd591; border-radius: 4px; margin-top: 6px; box-sizing: border-box;" oninput="calculateResults()">
       </div>
 
       <!-- 商品清單表格容器 (選擇「使用商品總原價」時隱藏) -->
@@ -741,7 +741,8 @@ $17,988</textarea>
         }
       });
 
-      if (customTotalPriceInput && currentListTotal > 0 && (parseFloat(customTotalPriceInput.value) || 0) === 0) {
+      const rawCustomVal = customTotalPriceInput?.value || '';
+      if (customTotalPriceInput && currentListTotal > 0 && (rawCustomVal === '0' || rawCustomVal.trim() === '')) {
         customTotalPriceInput.value = currentListTotal;
       }
 
@@ -840,7 +841,8 @@ $17,988</textarea>
     let totalOriginalPrice = 0;
 
     if (calcSourceMode === 'useCustomTotal') {
-      totalOriginalPrice = parseFloat(document.getElementById('customTotalPriceInput').value) || 0;
+      const rawCustomTotal = document.getElementById('customTotalPriceInput')?.value || '';
+      totalOriginalPrice = safeEvalMath(rawCustomTotal);
     } else {
       const rows = productTableBody.querySelectorAll('tr');
       rows.forEach(row => {
