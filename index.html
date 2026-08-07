@@ -490,11 +490,11 @@ $17,988</textarea>
       </div>
     </div>
 
-    <button type="button" class="btn-search" onclick="calculateBestCombinations()">🔍 開始精算最接近組合 (TOP 5 排名)</button>
+    <button type="button" class="btn-search" onclick="calculateBestCombinations()">🔍 開始精算最佳折數組合 (TOP 5 排名)</button>
 
     <div id="recommendResultArea" style="display: none; margin-top: 20px;">
       <div class="section-title" style="color: #096dd9; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px;">
-        <span>🏆 折後最接近 <span id="displayY">80,000</span> 元的 TOP 5 最佳組合</span>
+        <span>🏆 目標 <span id="displayY">80,000</span> 元附近最佳折數 TOP 5 組合</span>
         <span id="displayDiscountRule" style="font-size: 13px; font-weight: normal; color: #555;"></span>
       </div>
       <div class="table-container">
@@ -828,7 +828,7 @@ $17,988</textarea>
 
     updateDiscountRuleText();
 
-    // 關閉最接近組合結果區塊，避免舊資料誤導
+    // 關閉最佳組合結果區塊，避免舊資料誤導
     const recommendResultArea = document.getElementById('recommendResultArea');
     if (recommendResultArea) {
       recommendResultArea.style.display = 'none';
@@ -1081,16 +1081,36 @@ $17,988</textarea>
 
     search(0, []);
 
-    // 依據絕對差距小到大排序
-    allCombinations.sort((a, b) => a.absDiff - b.absDiff);
+    // 可接受範圍為目標金額加上 10% 彈性；範圍內才進入正式推薦排行。
+    // 若完全沒有可接受組合，才改列最接近目標的超額備選。
+    const maxAcceptable = targetY * 1.10;
+    const acceptableCombinations = allCombinations.filter(item => item.discountedPrice <= maxAcceptable);
+    const isOverBudgetFallback = acceptableCombinations.length === 0;
+    const rankedCombinations = isOverBudgetFallback ? allCombinations : acceptableCombinations;
 
-    const top5 = allCombinations.slice(0, 5);
+    rankedCombinations.sort((a, b) => {
+      if (isOverBudgetFallback && Math.abs(a.absDiff - b.absDiff) > 0.0001) {
+        return a.absDiff - b.absDiff;
+      }
 
-    renderRankings(top5, items, targetY);
+      if (Math.abs(a.effectiveFold - b.effectiveFold) > 0.0001) {
+        return a.effectiveFold - b.effectiveFold;
+      }
+
+      if (Math.abs(a.absDiff - b.absDiff) > 0.0001) {
+        return a.absDiff - b.absDiff;
+      }
+
+      return b.totalOriginal - a.totalOriginal;
+    });
+
+    const top5 = rankedCombinations.slice(0, 5);
+
+    renderRankings(top5, items, targetY, isOverBudgetFallback, maxAcceptable);
   }
 
   // 4. 渲染推薦排名結果
-  function renderRankings(topResults, items, targetY) {
+  function renderRankings(topResults, items, targetY, isOverBudgetFallback = false, maxAcceptable = targetY) {
     const recommendResultArea = document.getElementById('recommendResultArea');
     const rankingTbody = document.getElementById('rankingTableBody');
     document.getElementById('displayY').textContent = targetY.toLocaleString();
@@ -1098,6 +1118,12 @@ $17,988</textarea>
     updateDiscountRuleText();
 
     rankingTbody.innerHTML = '';
+
+    if (isOverBudgetFallback) {
+      const warningRow = document.createElement('tr');
+      warningRow.innerHTML = `<td colspan="7" style="color: #d0011b; font-weight: bold; text-align: left;">⚠️ 沒有折後金額在 $${Math.round(maxAcceptable).toLocaleString()} 內的組合，以下改列最接近目標的超額備選。</td>`;
+      rankingTbody.appendChild(warningRow);
+    }
 
     topResults.forEach((res, idx) => {
       const comboParts = [];
