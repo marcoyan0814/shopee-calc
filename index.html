@@ -336,13 +336,10 @@ $17,988</textarea>
 
         <!-- 雙重/多重折數連續換算 -->
         <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #cbd5e0;">
-          <div style="font-weight: bold; font-size: 13.5px; color: #2b6cb0; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
-            🧮 雙重/多重折數連續換算 (如 94+93)
-          </div>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <input type="text" id="multiFoldInput" placeholder="例如: 94+93 或 95+95" style="flex: 1; font-size: 13.5px; padding: 7px 10px;" oninput="calculateMultiFold()">
-            <button type="button" class="btn-primary" style="background-color: #00838f; padding: 7px 12px; font-size: 13px; white-space: nowrap;" onclick="calculateMultiFold()">換算折數</button>
-          </div>
+          <label for="multiFoldInput" style="font-weight: bold; font-size: 13.5px; color: #2b6cb0; margin-bottom: 6px; display: flex; align-items: center; gap: 4px;">
+            🧮 雙重/多重折數連續換算 (如 94+93)：
+          </label>
+          <input type="text" id="multiFoldInput" placeholder="例如: 94+93 或 95+95" style="width: 100%; font-size: 13.5px; padding: 7px 10px; box-sizing: border-box;" oninput="calculateMultiFold()">
           <div id="multiFoldResult" style="margin-top: 6px; font-size: 12.5px; color: #2e7d32; font-weight: bold; display: none;"></div>
         </div>
       </div>
