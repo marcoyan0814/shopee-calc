@@ -251,8 +251,28 @@ $17,988</textarea>
   <div class="main-layout" style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 20px;">
     <!-- 左欄：已匯入商品清單與試算 -->
     <div class="left-col" style="flex: 1.2; min-width: 320px;">
-      <div class="section-title">2. 已匯入商品清單與試算</div>
-      <div class="table-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <div class="section-title" style="margin-bottom: 0;">2. 已匯入商品清單與試算</div>
+        <div style="display: flex; gap: 10px; font-size: 13px; background: #e6f7ff; padding: 4px 10px; border-radius: 6px; border: 1px solid #91d5ff;">
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; color: #0050b3;">
+            <input type="radio" name="calcSourceMode" value="useList" checked onchange="toggleCalcSourceMode(); calculateResults();">
+            使用商品清單
+          </label>
+          <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; color: #0050b3;">
+            <input type="radio" name="calcSourceMode" value="useCustomTotal" onchange="toggleCalcSourceMode(); calculateResults();">
+            使用商品總原價
+          </label>
+        </div>
+      </div>
+
+      <!-- 自訂商品總原價輸入區 (選擇「使用商品總原價」時顯示) -->
+      <div id="customTotalArea" style="display: none; background: #fffbe6; padding: 15px; border: 1px solid #ffe58f; border-radius: 8px; margin-bottom: 15px;">
+        <label for="customTotalPriceInput" style="font-weight: bold; color: #d48806;">💰 自訂商品總原價 (元)：</label>
+        <input type="number" id="customTotalPriceInput" value="0" min="0" step="100" style="width: 100%; padding: 8px; font-size: 16px; border: 1px solid #ffd591; border-radius: 4px; margin-top: 6px; box-sizing: border-box;" oninput="calculateResults()">
+      </div>
+
+      <!-- 商品清單表格容器 (選擇「使用商品總原價」時隱藏) -->
+      <div id="productTableContainer" class="table-container">
         <table id="productTable">
           <thead>
             <tr>
@@ -284,10 +304,10 @@ $17,988</textarea>
         </div>
       </div>
 
-      <!-- 次要優惠二選一切換 -->
+      <!-- 次要優惠三選一切換 -->
       <div style="background: #fafafa; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 15px;">
-        <label style="font-weight: bold; margin-bottom: 8px; color: #2b6cb0;">次要優惠 (額外折價券與蝦幣回饋 擇一使用)：</label>
-        <div style="display: flex; gap: 20px; align-items: center; margin-top: 6px;">
+        <label style="font-weight: bold; margin-bottom: 8px; color: #2b6cb0;">次要優惠 (三選一 擇一使用)：</label>
+        <div style="display: flex; gap: 16px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
           <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 4px;">
             <input type="radio" name="benefitMode" value="extraCoupon" checked onchange="toggleBenefitMode(); calculateResults();">
             <strong>額外折價券</strong>
@@ -295,6 +315,10 @@ $17,988</textarea>
           <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 4px;">
             <input type="radio" name="benefitMode" value="coin" onchange="toggleBenefitMode(); calculateResults();">
             <strong>蝦幣回饋</strong>
+          </label>
+          <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <input type="radio" name="benefitMode" value="threshold" onchange="toggleBenefitMode(); calculateResults();">
+            <strong>低消折</strong>
           </label>
         </div>
       </div>
@@ -323,11 +347,23 @@ $17,988</textarea>
         </div>
       </div>
 
+      <!-- 低消折設定組 -->
+      <div class="form-row" id="thresholdGroup" style="display: none;">
+        <div class="form-col">
+          <label for="thresholdDiscountInput">折扣金額 (預設 5000 元)：</label>
+          <input type="number" id="thresholdDiscountInput" value="5000" min="0" step="100" oninput="calculateResults()">
+        </div>
+        <div class="form-col">
+          <label for="thresholdMinSpendInput">低消金額 (預設 80000 元)：</label>
+          <input type="number" id="thresholdMinSpendInput" value="80000" min="0" step="100" placeholder="主優惠折後滿此金額適用" oninput="calculateResults()">
+        </div>
+      </div>
+
       <div class="result-box" style="margin-top: 15px;">
         <div class="result-item">商品總原價：<span id="totalOriginalPrice">$0</span></div>
         <div class="result-item">折後商品總價：<span id="totalDiscountedPrice">$0</span></div>
         <div class="result-item">主折價券省下金額：<span id="discountAmount">$0</span></div>
-        <div class="result-item" id="extraDiscountRow">額外折價券省下金額：<span id="extraDiscountAmount">$0</span></div>
+        <div class="result-item" id="extraDiscountRow"><span id="extraDiscountLabel">額外折價券省下金額</span>：<span id="extraDiscountAmount">$0</span></div>
         <div class="result-item" id="coinRow" style="display: none;">蝦幣回饋金額：<span id="coinAmount">$0</span></div>
         <hr style="border: 0; border-top: 1px dashed #ffccbe; margin: 12px 0;">
         <div class="result-item highlight">回饋總額：<span id="totalBenefit">$0</span></div>
@@ -426,6 +462,45 @@ $17,988</textarea>
     calculateResults();
   }
 
+  // 1.4 計算來源模式切換 (使用商品清單 vs 使用商品總原價)
+  function toggleCalcSourceMode() {
+    const mode = document.querySelector('input[name="calcSourceMode"]:checked')?.value || 'useList';
+    const productTableContainer = document.getElementById('productTableContainer');
+    const customTotalArea = document.getElementById('customTotalArea');
+    const customTotalPriceInput = document.getElementById('customTotalPriceInput');
+
+    if (mode === 'useCustomTotal') {
+      // 算出當前商品清單的總金額作為預設填入值
+      let currentListTotal = 0;
+      const rows = productTableBody.querySelectorAll('tr');
+      rows.forEach(row => {
+        const priceInput = row.querySelector('.prod-price');
+        const qtyInput = row.querySelector('.prod-qty');
+        if (priceInput && qtyInput) {
+          const price = parseFloat(priceInput.value) || 0;
+          const qty = parseInt(qtyInput.value) || 0;
+          currentListTotal += price * qty;
+        }
+      });
+
+      if (customTotalPriceInput && currentListTotal > 0 && (parseFloat(customTotalPriceInput.value) || 0) === 0) {
+        customTotalPriceInput.value = currentListTotal;
+      }
+
+      if (productTableContainer) productTableContainer.style.display = 'none';
+      if (customTotalArea) customTotalArea.style.display = 'block';
+    } else {
+      if (productTableContainer) productTableContainer.style.display = 'block';
+      if (customTotalArea) customTotalArea.style.display = 'none';
+    }
+
+    // 當切換模式時，同時自動關閉下方的組合精算結果區塊
+    const recommendResultArea = document.getElementById('recommendResultArea');
+    if (recommendResultArea) {
+      recommendResultArea.style.display = 'none';
+    }
+  }
+
   // 1.5 更新標題規則說明文字
   function updateDiscountRuleText() {
     const displayDiscountRule = document.getElementById('displayDiscountRule');
@@ -442,34 +517,54 @@ $17,988</textarea>
       const extraDiscountCap = parseFloat(document.getElementById('extraDiscountCapInput').value) || 0;
       const extraCapStr = extraDiscountCap > 0 ? `${extraDiscountCap.toLocaleString()}元` : '0元';
       ruleStr = `（主折價券 ${discountVal} 折，上限 ${discountCapStr}；額外折價券 ${extraDiscountVal} 折，上限 ${extraCapStr}）`;
-    } else {
+    } else if (mode === 'coin') {
       const coinVal = parseFloat(coinInput.value) || 0;
       const coinCap = parseFloat(coinCapInput.value) || 0;
       const coinCapStr = coinCap > 0 ? `${coinCap.toLocaleString()}元` : '0元';
       ruleStr = `（主折價券 ${discountVal} 折，上限 ${discountCapStr}；蝦皮回饋 ${coinVal}%，上限 ${coinCapStr}）`;
+    } else if (mode === 'threshold') {
+      const thresholdDiscount = parseFloat(document.getElementById('thresholdDiscountInput').value) || 0;
+      const thresholdMinSpend = parseFloat(document.getElementById('thresholdMinSpendInput').value) || 0;
+      ruleStr = `（主折價券 ${discountVal} 折，上限 ${discountCapStr}；滿 ${thresholdMinSpend.toLocaleString()}元 折 ${thresholdDiscount.toLocaleString()}元）`;
     }
 
     displayDiscountRule.textContent = ruleStr;
   }
 
-  // 次要優惠模式切換（額外折價券 vs 蝦幣回饋 擇一使用）
+  // 次要優惠模式切換（額外折價券 vs 蝦幣回饋 vs 低消折 擇一使用）
   function toggleBenefitMode() {
     const mode = document.querySelector('input[name="benefitMode"]:checked')?.value || 'extraCoupon';
     const extraCouponGroup = document.getElementById('extraCouponGroup');
     const coinGroup = document.getElementById('coinGroup');
+    const thresholdGroup = document.getElementById('thresholdGroup');
+
     const extraDiscountRow = document.getElementById('extraDiscountRow');
+    const extraDiscountLabel = document.getElementById('extraDiscountLabel');
     const coinRow = document.getElementById('coinRow');
 
     if (mode === 'extraCoupon') {
       if (extraCouponGroup) extraCouponGroup.style.display = 'flex';
       if (coinGroup) coinGroup.style.display = 'none';
+      if (thresholdGroup) thresholdGroup.style.display = 'none';
+
       if (extraDiscountRow) extraDiscountRow.style.display = 'block';
+      if (extraDiscountLabel) extraDiscountLabel.textContent = '額外折價券省下金額';
       if (coinRow) coinRow.style.display = 'none';
-    } else {
+    } else if (mode === 'coin') {
       if (extraCouponGroup) extraCouponGroup.style.display = 'none';
       if (coinGroup) coinGroup.style.display = 'flex';
+      if (thresholdGroup) thresholdGroup.style.display = 'none';
+
       if (extraDiscountRow) extraDiscountRow.style.display = 'none';
       if (coinRow) coinRow.style.display = 'block';
+    } else if (mode === 'threshold') {
+      if (extraCouponGroup) extraCouponGroup.style.display = 'none';
+      if (coinGroup) coinGroup.style.display = 'none';
+      if (thresholdGroup) thresholdGroup.style.display = 'flex';
+
+      if (extraDiscountRow) extraDiscountRow.style.display = 'block';
+      if (extraDiscountLabel) extraDiscountLabel.textContent = '低消折省下金額';
+      if (coinRow) coinRow.style.display = 'none';
     }
 
     updateDiscountRuleText();
@@ -483,24 +578,29 @@ $17,988</textarea>
 
   // 2. 即時計算試算表結果
   function calculateResults() {
-    const rows = productTableBody.querySelectorAll('tr');
+    const calcSourceMode = document.querySelector('input[name="calcSourceMode"]:checked')?.value || 'useList';
     let totalOriginalPrice = 0;
 
-    rows.forEach(row => {
-      const priceInput = row.querySelector('.prod-price');
-      const qtyInput = row.querySelector('.prod-qty');
-      const subtotalTd = row.querySelector('.prod-subtotal');
+    if (calcSourceMode === 'useCustomTotal') {
+      totalOriginalPrice = parseFloat(document.getElementById('customTotalPriceInput').value) || 0;
+    } else {
+      const rows = productTableBody.querySelectorAll('tr');
+      rows.forEach(row => {
+        const priceInput = row.querySelector('.prod-price');
+        const qtyInput = row.querySelector('.prod-qty');
+        const subtotalTd = row.querySelector('.prod-subtotal');
 
-      if (priceInput && qtyInput) {
-        const price = parseFloat(priceInput.value) || 0;
-        const qty = parseInt(qtyInput.value) || 0;
-        const subtotal = price * qty;
-        
-        if (subtotalTd) subtotalTd.textContent = '$' + subtotal.toLocaleString();
+        if (priceInput && qtyInput) {
+          const price = parseFloat(priceInput.value) || 0;
+          const qty = parseInt(qtyInput.value) || 0;
+          const subtotal = price * qty;
+          
+          if (subtotalTd) subtotalTd.textContent = '$' + subtotal.toLocaleString();
 
-        totalOriginalPrice += subtotal;
-      }
-    });
+          totalOriginalPrice += subtotal;
+        }
+      });
+    }
 
     const mode = document.querySelector('input[name="benefitMode"]:checked')?.value || 'extraCoupon';
     const discountRate = (parseFloat(discountInput.value) || 100) / 100;
@@ -530,7 +630,7 @@ $17,988</textarea>
         extraDiscountAmount = extraDiscountCap;
       }
       totalDiscountedPrice = priceAfterCoupon1 - extraDiscountAmount;
-    } else {
+    } else if (mode === 'coin') {
       const coinRate = (parseFloat(coinInput.value) || 0) / 100;
       const coinCap = parseFloat(coinCapInput.value) || 0;
 
@@ -540,6 +640,16 @@ $17,988</textarea>
         coinAmount = coinCap;
       }
       totalDiscountedPrice = priceAfterCoupon1;
+    } else if (mode === 'threshold') {
+      const thresholdDiscount = parseFloat(document.getElementById('thresholdDiscountInput').value) || 0;
+      const thresholdMinSpend = parseFloat(document.getElementById('thresholdMinSpendInput').value) || 0;
+
+      if (priceAfterCoupon1 >= thresholdMinSpend) {
+        extraDiscountAmount = thresholdDiscount;
+      } else {
+        extraDiscountAmount = 0;
+      }
+      totalDiscountedPrice = priceAfterCoupon1 - extraDiscountAmount;
     }
 
     // 回饋總額 (折扣金額 + 額外折扣金額 + 蝦幣金額)
@@ -568,7 +678,7 @@ $17,988</textarea>
     const extraDiscountSpan = document.getElementById('extraDiscountAmount');
     if (extraDiscountRow && extraDiscountSpan) {
       extraDiscountSpan.textContent = '$' + Math.round(extraDiscountAmount).toLocaleString();
-      extraDiscountRow.style.display = (mode === 'extraCoupon' && extraDiscountAmount > 0) ? 'block' : 'none';
+      extraDiscountRow.style.display = ((mode === 'extraCoupon' || mode === 'threshold') && extraDiscountAmount > 0) ? 'block' : 'none';
     }
 
     const coinRow = document.getElementById('coinRow');
@@ -586,6 +696,12 @@ $17,988</textarea>
 
   // 3. TOP 5 全組合精算演算法 (DFS)
   function calculateBestCombinations() {
+    const calcSourceMode = document.querySelector('input[name="calcSourceMode"]:checked')?.value || 'useList';
+    if (calcSourceMode === 'useCustomTotal') {
+      alert('目前為「使用商品總原價」模式，如需進行 TOP 5 商品數量組合精算，請先切換回「使用商品清單」模式！');
+      return;
+    }
+
     const rows = productTableBody.querySelectorAll('tr');
     const items = [];
 
@@ -612,6 +728,9 @@ $17,988</textarea>
     const extraDiscountCap = parseFloat(document.getElementById('extraDiscountCapInput').value) || 0;
     const coinRate = (parseFloat(coinInput.value) || 0) / 100;
     const coinCap = parseFloat(coinCapInput.value) || 0;
+
+    const thresholdDiscount = parseFloat(document.getElementById('thresholdDiscountInput').value) || 0;
+    const thresholdMinSpend = parseFloat(document.getElementById('thresholdMinSpendInput').value) || 0;
 
     const allCombinations = [];
 
@@ -644,13 +763,20 @@ $17,988</textarea>
               extraDiscountAmount = extraDiscountCap;
             }
             discountedPrice = priceAfterCoupon1 - extraDiscountAmount;
-          } else {
+          } else if (mode === 'coin') {
             let rawCoin = priceAfterCoupon1 * coinRate;
             coinAmount = rawCoin;
             if (coinCap > 0 && coinAmount > coinCap) {
               coinAmount = coinCap;
             }
             discountedPrice = priceAfterCoupon1;
+          } else if (mode === 'threshold') {
+            if (priceAfterCoupon1 >= thresholdMinSpend) {
+              extraDiscountAmount = thresholdDiscount;
+            } else {
+              extraDiscountAmount = 0;
+            }
+            discountedPrice = priceAfterCoupon1 - extraDiscountAmount;
           }
 
           // 回饋總額
@@ -677,7 +803,8 @@ $17,988</textarea>
             totalBenefit: totalBenefit,
             effectiveFold: effectiveFold,
             diff: diff,
-            absDiff: absDiff
+            absDiff: absDiff,
+            benefitMode: mode
           });
         }
         return;
@@ -733,8 +860,9 @@ $17,988</textarea>
         ? res.effectiveFold.toFixed(0) 
         : res.effectiveFold.toFixed(2);
 
+      const extraLabelName = res.benefitMode === 'threshold' ? '低消折' : '額外';
       const discountDetailSubtext = res.extraDiscountAmount > 0
-        ? `<div style="font-size: 11px; font-weight: normal; color: #666; margin-top: 2px;">(主折扣 $${Math.round(res.discountAmount).toLocaleString()} + 額外 $${Math.round(res.extraDiscountAmount).toLocaleString()})</div>`
+        ? `<div style="font-size: 11px; font-weight: normal; color: #666; margin-top: 2px;">(主折扣 $${Math.round(res.discountAmount).toLocaleString()} + ${extraLabelName} $${Math.round(res.extraDiscountAmount).toLocaleString()})</div>`
         : (res.discountAmount > 0 ? `<div style="font-size: 11px; font-weight: normal; color: #666; margin-top: 2px;">(主折扣 $${Math.round(res.discountAmount).toLocaleString()})</div>` : '');
 
       const tr = document.createElement('tr');
@@ -751,7 +879,7 @@ $17,988</textarea>
         <td>${diffBadge}</td>
         <td style="font-size: 12px; text-align: left; line-height: 1.4;">
           <div>主折扣：$${Math.round(res.discountAmount).toLocaleString()}</div>
-          ${res.extraDiscountAmount > 0 ? `<div>額外折扣：$${Math.round(res.extraDiscountAmount).toLocaleString()}</div>` : ''}
+          ${res.extraDiscountAmount > 0 ? `<div>${res.benefitMode === 'threshold' ? '低消折' : '額外折扣'}：$${Math.round(res.extraDiscountAmount).toLocaleString()}</div>` : ''}
           ${res.coinAmount > 0 ? `<div>蝦幣：$${Math.round(res.coinAmount).toLocaleString()}</div>` : ''}
           <div style="color: #2e7d32; font-weight: bold;">總額：$${Math.round(res.totalBenefit).toLocaleString()}</div>
         </td>
@@ -803,9 +931,12 @@ $17,988</textarea>
     });
 
     const mode = document.querySelector('input[name="benefitMode"]:checked')?.value || 'extraCoupon';
+    const calcSourceMode = document.querySelector('input[name="calcSourceMode"]:checked')?.value || 'useList';
 
     const settings = {
       priceInput: document.getElementById('priceInput').value,
+      calcSourceMode: calcSourceMode,
+      customTotalPriceInput: document.getElementById('customTotalPriceInput').value,
       discountInput: document.getElementById('discountInput').value,
       discountCapInput: document.getElementById('discountCapInput').value,
       benefitMode: mode,
@@ -813,6 +944,8 @@ $17,988</textarea>
       extraDiscountCapInput: document.getElementById('extraDiscountCapInput').value,
       coinInput: document.getElementById('coinInput').value,
       coinCapInput: document.getElementById('coinCapInput').value,
+      thresholdDiscountInput: document.getElementById('thresholdDiscountInput').value,
+      thresholdMinSpendInput: document.getElementById('thresholdMinSpendInput').value,
       targetY: document.getElementById('targetY').value,
       maxQtyPerItem: document.getElementById('maxQtyPerItem').value,
       products: products
@@ -856,6 +989,13 @@ $17,988</textarea>
       try {
         const settings = JSON.parse(saved);
         if (settings.priceInput !== undefined) document.getElementById('priceInput').value = settings.priceInput;
+        
+        if (settings.calcSourceMode !== undefined) {
+          const radio = document.querySelector(`input[name="calcSourceMode"][value="${settings.calcSourceMode}"]`);
+          if (radio) radio.checked = true;
+        }
+        if (settings.customTotalPriceInput !== undefined) document.getElementById('customTotalPriceInput').value = settings.customTotalPriceInput;
+
         if (settings.discountInput !== undefined) document.getElementById('discountInput').value = settings.discountInput;
         if (settings.discountCapInput !== undefined) document.getElementById('discountCapInput').value = settings.discountCapInput;
         
@@ -868,6 +1008,8 @@ $17,988</textarea>
         if (settings.extraDiscountCapInput !== undefined) document.getElementById('extraDiscountCapInput').value = settings.extraDiscountCapInput;
         if (settings.coinInput !== undefined) document.getElementById('coinInput').value = settings.coinInput;
         if (settings.coinCapInput !== undefined) document.getElementById('coinCapInput').value = settings.coinCapInput;
+        if (settings.thresholdDiscountInput !== undefined) document.getElementById('thresholdDiscountInput').value = settings.thresholdDiscountInput;
+        if (settings.thresholdMinSpendInput !== undefined) document.getElementById('thresholdMinSpendInput').value = settings.thresholdMinSpendInput;
         if (settings.targetY !== undefined) document.getElementById('targetY').value = settings.targetY;
         if (settings.maxQtyPerItem !== undefined) document.getElementById('maxQtyPerItem').value = settings.maxQtyPerItem;
         
@@ -879,6 +1021,7 @@ $17,988</textarea>
         console.error('讀取 Cookie 設定失敗', e);
       }
     }
+    toggleCalcSourceMode();
     toggleBenefitMode();
     return loadedProducts;
   }
