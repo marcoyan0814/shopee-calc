@@ -4,6 +4,8 @@
 
 線上版本：<https://marcoyan0814.github.io/shopee-calc/>
 
+網站提供 Web App Manifest、Android/PWA 圖示與 Apple Touch Icon，可從手機瀏覽器選擇「加入主畫面」，以「蝦皮刷刷」名稱和專屬圖示開啟。
+
 ## 三種使用模式
 
 ### ⚡ 快速試算
