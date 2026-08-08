@@ -35,7 +35,7 @@
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
 
-    h2 {
+    h1 {
       color: var(--primary-color);
       font-size: 22px;
       margin-top: 0;
@@ -45,6 +45,53 @@
       align-items: center;
       gap: 8px;
     }
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 6px;
+      margin-bottom: 20px;
+      background: #f1f3f5;
+      border-radius: 10px;
+    }
+    .mode-tab { background: transparent; color: #555; }
+    .mode-tab[aria-selected="true"] {
+      color: white;
+      background: var(--primary-color);
+      box-shadow: 0 2px 8px rgba(238, 77, 45, 0.25);
+    }
+    .app-panel[hidden] { display: none !important; }
+    .panel {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .panel-title { margin: 0 0 12px; color: #333; font-size: 18px; }
+    input[type="text"], input[type="number"], select, textarea { min-height: 42px; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid rgba(25, 118, 210, 0.35);
+      outline-offset: 2px;
+    }
+    .status-message { margin-top: 10px; font-size: 13px; font-weight: bold; }
+    .result-hero {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .result-metric { background: #fff; border: 1px solid #ffccbe; border-radius: 8px; padding: 12px; }
+    .result-metric span { display: block; margin-top: 5px; color: #d0011b; font-size: 20px; font-weight: bold; }
+    .ranking-cards { display: none; }
+    .ranking-card { border: 1px solid #bae0ff; border-radius: 10px; padding: 14px; margin-top: 12px; background: white; }
+    .ranking-card:first-child { background: #e6f7ff; }
+    .ranking-card-header { display: flex; justify-content: space-between; gap: 8px; font-size: 17px; font-weight: bold; }
+    .ranking-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0; }
+    .coupon-results { display: grid; gap: 12px; margin-top: 16px; }
+    .coupon-card { border: 1px solid #d6e4ff; border-radius: 10px; padding: 16px; background: #f7faff; }
+    .coupon-card:first-child { border-color: #ffd666; background: #fffbe6; }
 
     .section-title {
       font-weight: bold;
@@ -226,7 +273,7 @@
         padding: 14px;
         border-radius: 8px;
       }
-      h2 {
+      h1 {
         font-size: 18px;
         padding-bottom: 8px;
       }
@@ -254,6 +301,10 @@
       .recommend-section {
         padding: 12px;
       }
+      .mode-tabs { grid-template-columns: 1fr; }
+      .result-hero { grid-template-columns: 1fr; }
+      #recommendResultArea .table-container { display: none; }
+      .ranking-cards { display: block; }
       /* 表格在手機版平滑橫向滾動 */
       .table-container {
         -webkit-overflow-scrolling: touch;
@@ -283,31 +334,31 @@
 <body>
 
 <div class="container">
-  <h2>🛒 蝦皮購物折扣回饋與組合推薦平台</h2>
+  <h1>🛒 蝦皮刷刷</h1>
+  <div class="mode-tabs" role="tablist" aria-label="計算模式">
+    <button type="button" class="mode-tab" role="tab" aria-selected="true" aria-controls="quickPanel" data-mode="quick">⚡ 快速試算</button>
+    <button type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="shoppingPanel" data-mode="shopping">🎯 商品湊單</button>
+    <button type="button" class="mode-tab" role="tab" aria-selected="false" aria-controls="couponPanel" data-mode="coupon">🧮 優惠券配對</button>
+  </div>
 
-  <div class="form-group" style="background: #ffffff; border: 1px solid #e8e8e8; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+  <div id="topToolsPanel" class="form-group panel">
     <div style="display: flex; gap: 24px; flex-wrap: wrap;">
       <!-- 左欄：商品原價與匯入管理 -->
-      <div style="flex: 1.2; min-width: 320px;">
+      <div id="shoppingImportPanel" class="app-panel" data-panel="shopping" hidden style="flex: 1.2; min-width: 320px;">
         <label for="priceInput" style="font-weight: bold; font-size: 16px; color: #1a1a1a;">1. 商品原價 (每行代表一筆商品金額)：</label>
-        <textarea id="priceInput" rows="7" style="margin-top: 8px;" placeholder="例如：&#10;$71,548&#10;$94,488">$71,548
-$94,488
-$21,788
-$20,088
-$19,688
-$19,188
-$17,988</textarea>
+        <textarea id="priceInput" rows="7" style="margin-top: 8px;" placeholder="例如：&#10;$71,548&#10;$94,488"></textarea>
         <div class="hint">每行代表一筆商品金額，點擊匯入時會自動過濾 $ 與逗號，且數量預設為 0。</div>
         <div class="btn-group" style="margin-top: 12px;">
           <button type="button" class="btn-primary" onclick="importPrices()">📥 匯入商品價格至列表</button>
+          <button type="button" class="btn-secondary" onclick="loadDemoPrices()">🧪 載入範例</button>
           <button type="button" class="btn-secondary" style="background-color: #00838f;" onclick="saveSettings()">💾 儲存設定至 Cookie</button>
           <button type="button" class="btn-secondary" style="background-color: #757575;" onclick="clearSettings()">🗑️ 清除已存設定</button>
         </div>
-        <div id="saveHint" style="font-size: 13px; color: #2e7d32; font-weight: bold; margin-top: 8px; display: none;"></div>
+        <div id="saveHint" class="status-message" role="status" aria-live="polite" style="color: #2e7d32; display: none;"></div>
       </div>
 
       <!-- 右欄：折扣快速計算功能 -->
-      <div style="flex: 1; min-width: 300px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column;">
+      <div id="quickPanel" class="app-panel" data-panel="quick" role="tabpanel" style="flex: 1; min-width: 300px; background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column;">
         <div style="font-weight: bold; font-size: 16px; color: #2b6cb0; margin-bottom: 12px; display: flex; align-items: center; gap: 6px;">
           ⚡ 折扣快速計算功能
         </div>
@@ -346,7 +397,7 @@ $17,988</textarea>
     </div>
   </div>
 
-  <div class="main-layout" style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 20px;">
+  <div id="shoppingPanel" class="main-layout app-panel" data-panel="shopping" role="tabpanel" hidden style="display: flex; gap: 24px; flex-wrap: wrap; margin-top: 20px;">
     <!-- 左欄：已匯入商品清單與試算 -->
     <div class="left-col" style="flex: 1.2; min-width: 320px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
@@ -461,6 +512,11 @@ $17,988</textarea>
       </div>
 
       <div class="result-box" style="margin-top: 15px;">
+        <div class="result-hero">
+          <div class="result-metric">折後應付<span id="heroPaid">$0</span></div>
+          <div class="result-metric">實質折數<span id="heroFold">100 折</span></div>
+          <div class="result-metric">共省下<span id="heroBenefit">$0</span></div>
+        </div>
         <div class="result-item">商品總原價：<span id="totalOriginalPrice">$0</span></div>
         <div class="result-item">折後商品總價：<span id="totalDiscountedPrice">$0</span></div>
         <div class="result-item">主折價券省下金額：<span id="discountAmount">$0</span></div>
@@ -476,7 +532,7 @@ $17,988</textarea>
     </div>
   </div>
 
-  <div class="recommend-section">
+  <div id="recommendPanel" class="recommend-section app-panel" data-panel="shopping" hidden>
     <div class="section-title" style="color: #096dd9; font-size: 18px;">🎯 組合推薦計算設定</div>
     <div class="form-row" style="margin-top: 10px;">
       <div class="form-col">
@@ -491,6 +547,7 @@ $17,988</textarea>
     </div>
 
     <button type="button" class="btn-search" onclick="calculateBestCombinations()">🔍 開始精算最佳折數組合 (TOP 5 排名)</button>
+    <div id="combinationStatus" class="status-message" role="status" aria-live="polite"></div>
 
     <div id="recommendResultArea" style="display: none; margin-top: 20px;">
       <div class="section-title" style="color: #096dd9; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px;">
@@ -514,8 +571,37 @@ $17,988</textarea>
           </tbody>
         </table>
       </div>
+      <div id="rankingCards" class="ranking-cards"></div>
     </div>
   </div>
+
+  <section id="couponPanel" class="app-panel panel" data-panel="coupon" role="tabpanel" hidden>
+    <h2 class="panel-title">🧮 優惠券最佳配對與刷取金額</h2>
+    <p class="hint">參數與 LINE「配」指令相同。多張優惠請以逗號分隔，每張券在推薦名次中只使用一次。</p>
+    <div class="form-row">
+      <div class="form-col">
+        <label for="couponMainInput">主券列表</label>
+        <input type="text" id="couponMainInput" placeholder="例如：90,95,85/2000" style="width:100%; padding:10px;">
+      </div>
+      <div class="form-col">
+        <label for="couponSubInput">次券或蝦幣券列表</label>
+        <input type="text" id="couponSubInput" placeholder="例如：93/1000,92,90,5%/1000" style="width:100%; padding:10px;">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-col">
+        <label for="couponTopLimit">顯示名次</label>
+        <input type="number" id="couponTopLimit" value="3" min="1" max="10">
+      </div>
+      <div class="form-col">
+        <label for="couponMaxPaid">折後應付上限（選填）</label>
+        <input type="number" id="couponMaxPaid" min="1" placeholder="例如：5000">
+      </div>
+    </div>
+    <button type="button" class="btn-search" onclick="calculateCouponPairings()">找出最佳優惠配對</button>
+    <div id="couponStatus" class="status-message" role="status" aria-live="polite"></div>
+    <div id="couponResults" class="coupon-results"></div>
+  </section>
 
 </div>
 
@@ -526,6 +612,32 @@ $17,988</textarea>
   const discountCapInput = document.getElementById('discountCapInput');
   const coinInput = document.getElementById('coinInput');
   const coinCapInput = document.getElementById('coinCapInput');
+
+  let activeAppMode = 'quick';
+  function switchAppMode(mode) {
+    activeAppMode = ['quick', 'shopping', 'coupon'].includes(mode) ? mode : 'quick';
+    document.querySelectorAll('.mode-tab').forEach(tab => {
+      const active = tab.dataset.mode === activeAppMode;
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      tab.tabIndex = active ? 0 : -1;
+    });
+    document.querySelectorAll('.app-panel').forEach(panel => {
+      panel.hidden = panel.dataset.panel !== activeAppMode;
+    });
+    document.getElementById('topToolsPanel').hidden = activeAppMode === 'coupon';
+  }
+
+  document.querySelectorAll('.mode-tab').forEach(tab => {
+    tab.addEventListener('click', () => switchAppMode(tab.dataset.mode));
+    tab.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+      const tabs = [...document.querySelectorAll('.mode-tab')];
+      const current = tabs.indexOf(tab);
+      const next = event.key === 'ArrowRight' ? (current + 1) % tabs.length : (current - 1 + tabs.length) % tabs.length;
+      tabs[next].focus();
+      switchAppMode(tabs[next].dataset.mode);
+    });
+  });
 
   // 0.5 算術運算符安全解析器 (+, -, *, /, (), 先乘除後加減)
   function safeEvalMath(expr) {
@@ -732,6 +844,11 @@ $17,988</textarea>
     }
 
     calculateResults();
+  }
+
+  function loadDemoPrices() {
+    priceInput.value = ['$71,548', '$94,488', '$21,788', '$20,088', '$19,688', '$19,188', '$17,988'].join('\n');
+    importPrices();
   }
 
   // 1.4 計算來源模式切換 (使用商品清單 vs 使用商品總原價)
@@ -963,6 +1080,9 @@ $17,988</textarea>
     }
 
     document.getElementById('totalBenefit').textContent = formattedBenefit;
+    document.getElementById('heroPaid').textContent = '$' + Math.round(totalDiscountedPrice).toLocaleString();
+    document.getElementById('heroFold').textContent = `${formattedFold} 折`;
+    document.getElementById('heroBenefit').textContent = formattedBenefit;
 
     document.getElementById('discountSummaryDisplay').textContent = 
       `${formattedOrigPrice} 回饋總金額 ${formattedBenefit} 約打 ${formattedFold} 折`;
@@ -972,9 +1092,11 @@ $17,988</textarea>
 
   // 3. TOP 5 全組合精算演算法 (DFS)
   function calculateBestCombinations() {
+    const status = document.getElementById('combinationStatus');
     const calcSourceMode = document.querySelector('input[name="calcSourceMode"]:checked')?.value || 'useList';
     if (calcSourceMode === 'useCustomTotal') {
-      alert('目前為「使用商品總原價」模式，如需進行 TOP 5 商品數量組合精算，請先切換回「使用商品清單」模式！');
+      status.textContent = '⚠️ 請先切換為「使用商品清單」。';
+      status.style.color = '#c62828';
       return;
     }
 
@@ -993,7 +1115,8 @@ $17,988</textarea>
     });
 
     if (items.length === 0) {
-      alert('沒有可列入組合精算的商品，商品金額尾數必須為 48 或 88！');
+      status.textContent = '⚠️ 沒有可列入組合精算的商品，商品金額尾數必須為 48 或 88。';
+      status.style.color = '#c62828';
       return;
     }
 
@@ -1002,6 +1125,14 @@ $17,988</textarea>
     const discountRate = (parseFloat(discountInput.value) || 100) / 100;
     const discountCap = parseFloat(discountCapInput.value) || 0;
     const maxLimit = parseInt(document.getElementById('maxQtyPerItem').value) || 3;
+    const estimatedCombinations = Math.pow(maxLimit + 1, items.length) - 1;
+    if (estimatedCombinations > 500000) {
+      status.textContent = `⚠️ 預估需檢查 ${Math.round(estimatedCombinations).toLocaleString()} 種組合，請減少商品種類或單種商品數量上限。`;
+      status.style.color = '#c62828';
+      return;
+    }
+    status.textContent = `正在檢查 ${Math.round(estimatedCombinations).toLocaleString()} 種組合…`;
+    status.style.color = '#2b6cb0';
 
     const extraDiscountRate = (parseFloat(document.getElementById('extraDiscountInput').value) || 100) / 100;
     const extraDiscountCap = parseFloat(document.getElementById('extraDiscountCapInput').value) || 0;
@@ -1124,17 +1255,21 @@ $17,988</textarea>
     const top5 = rankedCombinations.slice(0, 5);
 
     renderRankings(top5, items, targetY, isOverBudgetFallback, maxAcceptable);
+    status.textContent = `✅ 已完成 ${Math.round(estimatedCombinations).toLocaleString()} 種組合計算。`;
+    status.style.color = '#2e7d32';
   }
 
   // 4. 渲染推薦排名結果
   function renderRankings(topResults, items, targetY, isOverBudgetFallback = false, maxAcceptable = targetY) {
     const recommendResultArea = document.getElementById('recommendResultArea');
     const rankingTbody = document.getElementById('rankingTableBody');
+    const rankingCards = document.getElementById('rankingCards');
     document.getElementById('displayY').textContent = targetY.toLocaleString();
 
     updateDiscountRuleText();
 
     rankingTbody.innerHTML = '';
+    rankingCards.innerHTML = '';
 
     if (isOverBudgetFallback) {
       const warningRow = document.createElement('tr');
@@ -1191,10 +1326,154 @@ $17,988</textarea>
         <td>${formattedFold} 折</td>
       `;
       rankingTbody.appendChild(tr);
+
+      const card = document.createElement('article');
+      card.className = 'ranking-card';
+      card.innerHTML = `
+        <div class="ranking-card-header"><span>${idx === 0 ? '👑 ' : ''}第 ${idx + 1} 名</span><span>${formattedFold} 折</span></div>
+        <div class="ranking-card-grid">
+          <div>折後應付<br><strong>$${Math.round(res.discountedPrice).toLocaleString()}</strong></div>
+          <div>回饋總額<br><strong>$${Math.round(res.totalBenefit).toLocaleString()}</strong></div>
+          <div>總原價<br><strong>$${Math.round(res.totalOriginal).toLocaleString()}</strong></div>
+          <div>目標差距<br>${diffBadge}</div>
+        </div>
+        <div><strong>商品搭配</strong><br>${comboString}</div>
+        <div style="margin-top:8px; color:#555;">主折扣 $${Math.round(res.discountAmount).toLocaleString()}${res.extraDiscountAmount > 0 ? `；${extraLabelName} $${Math.round(res.extraDiscountAmount).toLocaleString()}` : ''}${res.coinAmount > 0 ? `；蝦幣 $${Math.round(res.coinAmount).toLocaleString()}` : ''}</div>
+      `;
+      rankingCards.appendChild(card);
     });
 
     recommendResultArea.style.display = 'block';
     recommendResultArea.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function parseCouponItem(raw, id) {
+    const value = raw.trim();
+    const match = value.match(/^([0-9]+(?:\.[0-9]+)?)(%)?(?:\/([0-9]+(?:\.[0-9]+)?))?$/);
+    if (!match) return null;
+    const number = Number(match[1]);
+    const cap = match[3] ? Number(match[3]) : 0;
+    if (match[2]) {
+      if (number <= 0 || number > 100) return null;
+      const capSpend = cap > 0 ? Math.ceil((cap / (number / 100)) - 1e-9) : 0;
+      return { id, type: 'coin', rate: number, cap, raw: value, desc: `蝦幣 ${number}%${cap > 0 ? `（上限 ${cap.toLocaleString()}，封頂 ${capSpend.toLocaleString()}）` : ''}` };
+    }
+    if (number <= 0 || number >= 100) return null;
+    const fold = number < 10 ? number * 10 : number;
+    const capSpend = cap > 0 ? Math.ceil((cap / (1 - fold / 100)) - 1e-9) : 0;
+    return { id, type: 'coupon', rate: fold, cap, raw: value, desc: `${fold} 折${cap > 0 ? `（上限 ${cap.toLocaleString()}，封頂 ${capSpend.toLocaleString()}）` : ''}` };
+  }
+
+  function couponOutcome(original, main, sub) {
+    const mainSaveRate = main.type === 'coupon' ? 1 - main.rate / 100 : 0;
+    const disc1 = main.cap > 0 ? Math.min(original * mainSaveRate, main.cap) : original * mainSaveRate;
+    const afterMain = original - disc1;
+    let disc2 = 0;
+    let coin = 0;
+    if (sub?.type === 'coupon') {
+      disc2 = afterMain * (1 - sub.rate / 100);
+      if (sub.cap > 0) disc2 = Math.min(disc2, sub.cap);
+    } else if (sub?.type === 'coin') {
+      coin = afterMain * (sub.rate / 100);
+      if (sub.cap > 0) coin = Math.min(coin, sub.cap);
+    }
+    const paid = afterMain - disc2;
+    const benefit = disc1 + disc2 + coin;
+    return { original, paid, disc1, disc2, coin, benefit, fold: original > 0 ? ((paid - coin) / original) * 100 : 100 };
+  }
+
+  function calculateCouponPairings() {
+    const status = document.getElementById('couponStatus');
+    const resultArea = document.getElementById('couponResults');
+    const mainRaw = document.getElementById('couponMainInput').value.trim();
+    const subRaw = document.getElementById('couponSubInput').value.trim();
+    const topLimit = Math.min(10, Math.max(1, Number(document.getElementById('couponTopLimit').value) || 3));
+    const maxPaidValue = Number(document.getElementById('couponMaxPaid').value);
+    const maxPaid = maxPaidValue > 0 ? maxPaidValue : null;
+
+    const mainParsed = mainRaw.split(',').filter(Boolean).map((raw, index) => parseCouponItem(raw, `main_${index}`)).filter(Boolean);
+    const subParsed = subRaw ? subRaw.split(',').filter(Boolean).map((raw, index) => parseCouponItem(raw, `sub_${index}`)).filter(Boolean) : [];
+    if (!mainRaw || mainParsed.length !== mainRaw.split(',').filter(Boolean).length) {
+      status.textContent = '⚠️ 請輸入有效主券，例如：90,95,85/2000。';
+      status.style.color = '#c62828';
+      resultArea.innerHTML = '';
+      return;
+    }
+    if (subRaw && subParsed.length !== subRaw.split(',').filter(Boolean).length) {
+      status.textContent = '⚠️ 次券格式有誤，例如：93/1000,92,90,5%/1000。';
+      status.style.color = '#c62828';
+      resultArea.innerHTML = '';
+      return;
+    }
+
+    let availableMain = [...mainParsed];
+    let availableSub = [...subParsed];
+    const results = [];
+    for (let rank = 1; rank <= topLimit && availableMain.length > 0; rank++) {
+      const candidates = [];
+      availableMain.forEach(main => {
+        [null, ...availableSub].forEach(sub => {
+          const sameCoupon = sub && main.type === 'coupon' && sub.type === 'coupon'
+            && (main.raw === sub.raw || (main.rate === sub.rate && main.cap === sub.cap));
+          if (sameCoupon) return;
+
+          const mainSaveRate = main.type === 'coupon' ? 1 - main.rate / 100 : 0;
+          const mainPaidRate = 1 - mainSaveRate;
+          const boundaries = [];
+          if (main.cap > 0 && mainSaveRate > 0) boundaries.push(main.cap / mainSaveRate);
+          if (sub && sub.cap > 0) {
+            const subRate = sub.type === 'coupon' ? 1 - sub.rate / 100 : sub.rate / 100;
+            if (subRate > 0 && mainPaidRate > 0) boundaries.push(sub.cap / subRate / mainPaidRate);
+          }
+          let unlimited = boundaries.length === 0;
+          let suggested = unlimited ? 10000 : Math.ceil(Math.min(...boundaries) - 1e-9);
+          const suggestedOutcome = couponOutcome(suggested, main, sub);
+          if (maxPaid !== null && (unlimited || suggestedOutcome.paid > maxPaid)) {
+            let low = 0;
+            let high = Math.max(suggested, maxPaid * 2 + 1);
+            while (couponOutcome(high, main, sub).paid <= maxPaid && high < 1e9) high *= 2;
+            for (let i = 0; i < 80; i++) {
+              const mid = (low + high) / 2;
+              if (couponOutcome(mid, main, sub).paid <= maxPaid) low = mid; else high = mid;
+            }
+            suggested = Math.floor(low);
+            unlimited = false;
+          }
+          candidates.push({ ...couponOutcome(Math.max(1, suggested), main, sub), main, sub, unlimited });
+        });
+      });
+      candidates.sort((a, b) => {
+        if (Math.abs(a.fold - b.fold) > 0.001) return a.fold - b.fold;
+        if (a.unlimited !== b.unlimited) return a.unlimited ? 1 : -1;
+        return a.original - b.original;
+      });
+      if (!candidates.length) break;
+      const best = candidates[0];
+      results.push(best);
+      availableMain = availableMain.filter(item => item.id !== best.main.id);
+      if (best.sub) availableSub = availableSub.filter(item => item.id !== best.sub.id);
+    }
+
+    resultArea.innerHTML = '';
+    results.forEach((result, index) => {
+      const fold = Number.isInteger(result.fold) ? result.fold.toFixed(0) : result.fold.toFixed(2);
+      const card = document.createElement('article');
+      card.className = 'coupon-card';
+      card.innerHTML = `
+        <div class="ranking-card-header"><span>${index === 0 ? '👑 最優推薦 ' : ''}第 ${index + 1} 名</span><span>${fold} 折</span></div>
+        ${result.unlimited ? '<p><strong>建議刷取金額：</strong>不限金額（折數固定）</p>' : `
+          <div class="ranking-card-grid">
+            <div>建議刷取<br><strong>${Math.round(result.original).toLocaleString()}</strong></div>
+            <div>折後應付<br><strong>${Math.round(result.paid).toLocaleString()}</strong></div>
+            <div>自湊區間<br><strong>${Math.max(1, Math.round(result.original * 0.95)).toLocaleString()}～${Math.round(result.original).toLocaleString()}</strong></div>
+            <div>綜合優惠<br><strong>${Math.round(result.benefit).toLocaleString()}</strong></div>
+          </div>`}
+        <p><strong>主券：</strong>${result.main.desc}<br><strong>次券：</strong>${result.sub?.desc || '無'}</p>
+      `;
+      resultArea.appendChild(card);
+    });
+    status.textContent = `✅ 已完成 ${results.length} 組最佳優惠配對。`;
+    status.style.color = '#2e7d32';
   }
 
   // 5. Cookie 讀寫與設定管理
@@ -1256,6 +1535,11 @@ $17,988</textarea>
       thresholdMinSpendInput: document.getElementById('thresholdMinSpendInput').value,
       targetY: document.getElementById('targetY').value,
       maxQtyPerItem: document.getElementById('maxQtyPerItem').value,
+      activeAppMode: activeAppMode,
+      couponMainInput: document.getElementById('couponMainInput').value,
+      couponSubInput: document.getElementById('couponSubInput').value,
+      couponTopLimit: document.getElementById('couponTopLimit').value,
+      couponMaxPaid: document.getElementById('couponMaxPaid').value,
       products: products
     };
     setCookie('shopee_calc_settings', JSON.stringify(settings), 365);
@@ -1325,6 +1609,11 @@ $17,988</textarea>
         if (settings.thresholdMinSpendInput !== undefined) document.getElementById('thresholdMinSpendInput').value = settings.thresholdMinSpendInput;
         if (settings.targetY !== undefined) document.getElementById('targetY').value = settings.targetY;
         if (settings.maxQtyPerItem !== undefined) document.getElementById('maxQtyPerItem').value = settings.maxQtyPerItem;
+        if (settings.couponMainInput !== undefined) document.getElementById('couponMainInput').value = settings.couponMainInput;
+        if (settings.couponSubInput !== undefined) document.getElementById('couponSubInput').value = settings.couponSubInput;
+        if (settings.couponTopLimit !== undefined) document.getElementById('couponTopLimit').value = settings.couponTopLimit;
+        if (settings.couponMaxPaid !== undefined) document.getElementById('couponMaxPaid').value = settings.couponMaxPaid;
+        if (settings.activeAppMode !== undefined) activeAppMode = settings.activeAppMode;
         
         if (Array.isArray(settings.products) && settings.products.length > 0) {
           renderProductsFromData(settings.products);
@@ -1336,6 +1625,7 @@ $17,988</textarea>
     }
     toggleCalcSourceMode();
     toggleBenefitMode();
+    switchAppMode(activeAppMode);
     calculateQuickDiscount();
     calculateMultiFold();
     return loadedProducts;
