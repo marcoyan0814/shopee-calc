@@ -629,6 +629,20 @@ $17,988</textarea>
   }
 
   // 1.8 計算並顯示 3 個上限欄位對應的「封頂金額」
+  function calculateOriginalPriceForPostCouponBase(targetBase, discountRate, discountCap) {
+    if (targetBase <= 0 || discountRate <= 0 || discountRate >= 1) return Math.max(0, targetBase);
+
+    const uncappedOriginal = targetBase / discountRate;
+    const uncappedDiscount = uncappedOriginal * (1 - discountRate);
+    return discountCap <= 0 || uncappedDiscount <= discountCap
+      ? uncappedOriginal
+      : targetBase + discountCap;
+  }
+
+  function ceilCurrency(amount) {
+    return Math.ceil(Number(amount.toFixed(8)));
+  }
+
   function updateCapHints() {
     // 1. 主折價券折扣上限封頂
     const discountVal = parseFloat(discountInput.value) || 100;
@@ -639,7 +653,7 @@ $17,988</textarea>
     if (discountCapHintEl) {
       if (discountCap > 0 && discountRate < 1) {
         const capPrice = discountCap / (1 - discountRate);
-        discountCapHintEl.textContent = `💡 封頂金額 $${Math.ceil(capPrice).toLocaleString()}`;
+        discountCapHintEl.textContent = `💡 封頂金額 $${ceilCurrency(capPrice).toLocaleString()}`;
         discountCapHintEl.style.display = 'block';
       } else {
         discountCapHintEl.textContent = '';
@@ -656,8 +670,8 @@ $17,988</textarea>
     if (extraCapHintEl) {
       if (extraDiscountCap > 0 && extraRate < 1) {
         const capBasePrice = extraDiscountCap / (1 - extraRate);
-        const capTotalPrice = discountRate > 0 ? (capBasePrice / discountRate) : capBasePrice;
-        extraCapHintEl.textContent = `💡 封頂金額 $${Math.ceil(capTotalPrice).toLocaleString()} (折後 $${Math.ceil(capBasePrice).toLocaleString()})`;
+        const capTotalPrice = calculateOriginalPriceForPostCouponBase(capBasePrice, discountRate, discountCap);
+        extraCapHintEl.textContent = `💡 封頂金額 $${ceilCurrency(capTotalPrice).toLocaleString()} (折後 $${ceilCurrency(capBasePrice).toLocaleString()})`;
         extraCapHintEl.style.display = 'block';
       } else {
         extraCapHintEl.textContent = '';
@@ -674,8 +688,8 @@ $17,988</textarea>
     if (coinCapHintEl) {
       if (coinCap > 0 && coinRate > 0) {
         const capBasePrice = coinCap / coinRate;
-        const capTotalPrice = discountRate > 0 ? (capBasePrice / discountRate) : capBasePrice;
-        coinCapHintEl.textContent = `💡 封頂金額 $${Math.ceil(capTotalPrice).toLocaleString()} (折後 $${Math.ceil(capBasePrice).toLocaleString()})`;
+        const capTotalPrice = calculateOriginalPriceForPostCouponBase(capBasePrice, discountRate, discountCap);
+        coinCapHintEl.textContent = `💡 封頂金額 $${ceilCurrency(capTotalPrice).toLocaleString()} (折後 $${ceilCurrency(capBasePrice).toLocaleString()})`;
         coinCapHintEl.style.display = 'block';
       } else {
         coinCapHintEl.textContent = '';
